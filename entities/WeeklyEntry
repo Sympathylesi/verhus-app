@@ -1,0 +1,164 @@
+{
+  "name": "WeeklyEntry",
+  "type": "object",
+  "properties": {
+    "health_area_id": {
+      "type": "string",
+      "description": "Reference to HealthArea"
+    },
+    "district": {
+      "type": "string"
+    },
+    "health_area_name": {
+      "type": "string"
+    },
+    "week_number": {
+      "type": "number",
+      "description": "ISO week number"
+    },
+    "year": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "submitted",
+        "approved",
+        "rejected"
+      ],
+      "default": "draft"
+    },
+    "community_engagement": {
+      "type": "object",
+      "description": "Religious, Community, Traditional leaders engagement data",
+      "properties": {
+        "religious": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "number"
+            },
+            "level": {
+              "type": "string"
+            }
+          }
+        },
+        "community": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "number"
+            },
+            "level": {
+              "type": "string"
+            }
+          }
+        },
+        "traditional": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "number"
+            },
+            "level": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "screening": {
+      "type": "object",
+      "description": "Malnutrition, disability, adverse events data",
+      "properties": {
+        "sam_male_0_11": {
+          "type": "number"
+        },
+        "sam_female_0_11": {
+          "type": "number"
+        },
+        "sam_male_12_23": {
+          "type": "number"
+        },
+        "sam_female_12_23": {
+          "type": "number"
+        },
+        "mam_male_0_11": {
+          "type": "number"
+        },
+        "mam_female_0_11": {
+          "type": "number"
+        },
+        "mam_male_12_23": {
+          "type": "number"
+        },
+        "mam_female_12_23": {
+          "type": "number"
+        },
+        "disability_count": {
+          "type": "number"
+        },
+        "adverse_events": {
+          "type": "number"
+        },
+        "stock_out": {
+          "type": "boolean"
+        },
+        "stock_out_vaccines": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "fridge_functional": {
+          "type": "boolean"
+        }
+      }
+    },
+    "vaccination_sessions": {
+      "type": "object",
+      "description": "Session counts by type and demographics",
+      "properties": {
+        "mobile": {
+          "type": "object"
+        },
+        "outreach": {
+          "type": "object"
+        },
+        "fixed": {
+          "type": "object"
+        },
+        "door_to_door": {
+          "type": "object"
+        }
+      }
+    },
+    "vaccine_doses": {
+      "type": "object",
+      "description": "Doses administered per vaccine per age/gender group"
+    },
+    "total_children_vaccinated": {
+      "type": "number"
+    },
+    "total_doses_administered": {
+      "type": "number"
+    },
+    "dtp3_count": {
+      "type": "number"
+    },
+    "mcv2_count": {
+      "type": "number"
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "health_area_id",
+    "district",
+    "health_area_name",
+    "week_number",
+    "year"
+  ]
+}

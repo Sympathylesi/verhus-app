@@ -1,0 +1,36 @@
+{
+  "name": "Alert",
+  "type": "object",
+  "properties": {
+    "message": {
+      "type": "string"
+    },
+    "message_fr": {
+      "type": "string",
+      "description": "French translation of the message"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "warning",
+        "danger",
+        "info"
+      ],
+      "default": "warning"
+    },
+    "district": {
+      "type": "string"
+    },
+    "health_area": {
+      "type": "string"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "message",
+    "type"
+  ]
+}

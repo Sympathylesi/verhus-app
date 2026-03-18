@@ -1,0 +1,32 @@
+{
+  "name": "HealthArea",
+  "type": "object",
+  "properties": {
+    "district": {
+      "type": "string",
+      "description": "District name"
+    },
+    "name": {
+      "type": "string",
+      "description": "Health area name"
+    },
+    "target_population": {
+      "type": "number",
+      "description": "Target population for vaccination"
+    },
+    "region": {
+      "type": "string",
+      "description": "Region of Cameroon"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "district",
+    "name"
+  ]
+}
