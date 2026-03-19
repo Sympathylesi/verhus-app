@@ -2,13 +2,12 @@ import React from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { LogOut, User, Shield } from 'lucide-react';
 
 export default function Settings() {
   const { lang } = useOutletContext();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   return (
     <div className="space-y-6">
@@ -49,7 +48,7 @@ export default function Settings() {
           <Button
             variant="outline"
             className="text-red-500 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/20 gap-2"
-            onClick={() => base44.auth.logout()}
+            onClick={logout}
           >
             <LogOut className="h-4 w-4" />
             {lang === 'en' ? 'Sign Out' : 'Déconnexion'}
