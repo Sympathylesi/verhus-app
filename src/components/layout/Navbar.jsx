@@ -1,11 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sun, Moon, Menu, X, Syringe, WifiOff, LogOut, Settings, User } from 'lucide-react';
+import { Sun, Moon, Menu, X, Syringe, WifiOff, LogOut, Settings, FlaskConical } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
+import { usePeriod } from '@/lib/PeriodContext';
+import { base44 } from '@/api/base44Client';
+import PeriodSelector from './PeriodSelector';
 import { cn } from '@/lib/utils';
 
 function getISOWeek(date) {
@@ -35,8 +38,9 @@ const ROLE_LABELS = {
   collector: { en: 'Collector', fr: 'Collecteur' },
 };
 
-export default function Navbar({ lang, setLang, dark, setDark, selectedWeek, setSelectedWeek, onToggleSidebar, sidebarOpen }) {
+export default function Navbar({ lang, setLang, dark, setDark, selectedWeek, setSelectedWeek, onToggleSidebar, sidebarOpen, showPeriodSelector }) {
   const { user, logout, isOnline } = useAuth();
+  const { appMode } = usePeriod();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -49,22 +53,23 @@ export default function Navbar({ lang, setLang, dark, setDark, selectedWeek, set
   const role = user?.role || 'collector';
   const roleLabel = ROLE_LABELS[role]?.[lang] ?? role;
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handler = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdownOpen(false); };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login', { replace: true });
-  };
+  const handleLogout = () => { logout(); navigate('/login', { replace: true }); };
 
   return (
     <>
-      {/* Offline banner */}
-      {!isOnline && (
+      {base44.isLocal && (
+        <div className="fixed top-0 left-0 right-0 z-[60] bg-sky-600 text-white text-xs text-center py-1 flex items-center justify-center gap-1.5">
+          <FlaskConical className="h-3 w-3" />
+          {lang === 'fr' ? 'Mode démo — données locales (aucun backend configuré)' : 'Demo mode — local data only (no backend configured)'}
+        </div>
+      )}
+      {!base44.isLocal && !isOnline && (
         <div className="fixed top-0 left-0 right-0 z-[60] bg-amber-500 text-white text-xs text-center py-1 flex items-center justify-center gap-1.5">
           <WifiOff className="h-3 w-3" />
           {lang === 'fr' ? 'Hors ligne — connexion limitée' : 'Offline — limited connectivity'}
@@ -73,7 +78,7 @@ export default function Navbar({ lang, setLang, dark, setDark, selectedWeek, set
 
       <header className={cn(
         "fixed left-0 right-0 z-50 h-16 bg-card border-b border-border flex items-center px-4 gap-3",
-        !isOnline ? 'top-6' : 'top-0'
+        (base44.isLocal || !isOnline) ? 'top-6' : 'top-0'
       )}>
         <Button variant="ghost" size="icon" className="lg:hidden" onClick={onToggleSidebar}>
           {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -81,8 +86,11 @@ export default function Navbar({ lang, setLang, dark, setDark, selectedWeek, set
 
         {/* Brand */}
         <div className="flex items-center gap-2 mr-auto">
-          <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center shrink-0">
-            <Syringe className="h-5 w-5 text-primary-foreground" />
+          <div className={cn(
+            "h-9 w-9 rounded-lg flex items-center justify-center shrink-0 transition-colors",
+            appMode === 'historical' ? 'bg-violet-600' : 'bg-primary'
+          )}>
+            <Syringe className="h-5 w-5 text-white" />
           </div>
           <div className="hidden sm:block">
             <span className="font-bold text-base tracking-tight">VERHUS</span>
@@ -90,17 +98,23 @@ export default function Navbar({ lang, setLang, dark, setDark, selectedWeek, set
           </div>
         </div>
 
-        {/* Week selector */}
-        <Select value={selectedWeek} onValueChange={setSelectedWeek}>
-          <SelectTrigger className="w-32 h-9 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {weekOptions.map(opt => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Period / week selector */}
+        {showPeriodSelector && (
+          appMode === 'historical' ? (
+            <PeriodSelector lang={lang} />
+          ) : (
+            <Select value={selectedWeek} onValueChange={setSelectedWeek}>
+              <SelectTrigger className="w-32 h-9 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {weekOptions.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )
+        )}
 
         {/* Lang toggle */}
         <Button variant="ghost" size="sm" className="h-9 px-2 text-xs font-medium" onClick={() => setLang(lang === 'en' ? 'fr' : 'en')}>
@@ -131,7 +145,6 @@ export default function Navbar({ lang, setLang, dark, setDark, selectedWeek, set
 
           {dropdownOpen && (
             <div className="absolute right-0 top-full mt-2 w-56 bg-card border border-border rounded-xl shadow-lg py-1 z-50">
-              {/* User info header */}
               <div className="px-3 py-2.5 border-b border-border">
                 <p className="text-sm font-medium truncate">{user?.full_name}</p>
                 <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
@@ -139,7 +152,6 @@ export default function Navbar({ lang, setLang, dark, setDark, selectedWeek, set
                   {roleLabel}
                 </Badge>
               </div>
-
               <button
                 onClick={() => { setDropdownOpen(false); navigate('/Settings'); }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-muted transition-colors"
@@ -147,7 +159,6 @@ export default function Navbar({ lang, setLang, dark, setDark, selectedWeek, set
                 <Settings className="h-4 w-4 text-muted-foreground" />
                 {lang === 'fr' ? 'Paramètres' : 'Settings'}
               </button>
-
               <div className="border-t border-border mt-1 pt-1">
                 <button
                   onClick={handleLogout}

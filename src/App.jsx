@@ -18,6 +18,11 @@ import Reports from './pages/Reports';
 import Analytics from './pages/Analytics';
 import OneTimeIndicators from './pages/OneTimeIndicators';
 import Settings from './pages/Settings';
+import HistoryDB from './pages/HistoryDB';
+import AggregatedDashboard from './pages/AggregatedDashboard';
+import MapsCoverage from './pages/MapsCoverage';
+import ExportsMigration from './pages/ExportsMigration';
+import MainDB from './pages/MainDB';
 
 // ─── Guards ─────────────────────────────────────────────────────────────────
 function RequireAuth() {
@@ -72,6 +77,15 @@ function AppRoutes() {
           <Route path="/Analytics" element={<Analytics />} />
           <Route path="/Settings" element={<Settings />} />
           <Route path="/OneTimeIndicators" element={<OneTimeIndicators />} />
+
+          {/* Historical / analysis routes */}
+          <Route path="/HistoryDB" element={<HistoryDB />} />
+          <Route path="/AggregatedDashboard" element={<AggregatedDashboard />} />
+          <Route path="/MapsCoverage" element={<MapsCoverage />} />
+          <Route path="/ExportsMigration" element={<ExportsMigration />} />
+          <Route path="/MainDB" element={<MainDB />} />
+          <Route path="/main-db" element={<MainDB />} />
+          <Route path="/history" element={<MainDB />} />
 
           {/* Collector + Supervisor + Admin */}
           <Route element={<RequireRole roles={['collector', 'supervisor', 'admin']} />}>
