@@ -102,7 +102,7 @@ export default function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Router basename="/verhus-app" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <AppRoutes />
         </Router>
         <Toaster richColors position="top-right" />

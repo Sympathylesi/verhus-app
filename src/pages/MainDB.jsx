@@ -108,13 +108,13 @@ export default function MainDB() {
   // ── GeoJSON (authoritative region/district lists) ─────────────────────────
   const { data: regionsGeo } = useQuery({
     queryKey: ['cameroon-regions-geojson'],
-    queryFn: () => fetch('/cameroon-regions.geojson').then(r => r.json()),
+    queryFn: () => fetch(`${import.meta.env.BASE_URL}cameroon-regions.geojson`).then(r => r.json()),
     staleTime: Infinity,
     gcTime: Infinity,
   });
   const { data: districtsGeo } = useQuery({
     queryKey: ['cameroon-districts-geojson'],
-    queryFn: () => fetch('/cameroon-districts.geojson').then(r => r.json()),
+    queryFn: () => fetch(`${import.meta.env.BASE_URL}cameroon-districts.geojson`).then(r => r.json()),
     staleTime: Infinity,
     gcTime: Infinity,
   });

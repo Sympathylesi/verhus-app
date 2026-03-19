@@ -40,7 +40,7 @@ export default function MapsCoverage() {
   // GeoJSON (fetched once, cached forever — static asset)
   const { data: geojson } = useQuery({
     queryKey: ['cameroon-districts-geojson'],
-    queryFn: () => fetch('/cameroon-districts.geojson').then(r => r.json()),
+    queryFn: () => fetch(`${import.meta.env.BASE_URL}cameroon-districts.geojson`).then(r => r.json()),
     staleTime: Infinity,
     gcTime: Infinity,
   });
