@@ -2,7 +2,7 @@ import { appParams } from '@/lib/app-params';
 import { localEntities } from './localEntities';
 
 // Seed demo data on first load (async, no-op if already seeded)
-localEntities.seedDemoData().catch(e => console.warn('[VERHUS] Seed error:', e));
+export const seedReady = localEntities.seedDemoData().catch(e => console.warn('[VERHUS] Seed error:', e));
 
 const hasBackend = Boolean(appParams.appId && appParams.appId !== 'null');
 
@@ -28,6 +28,7 @@ function makeProxy(entityName) {
 
   const call = async (method, ...args) => {
     if (!hasBackend) {
+      await seedReady;
       if (!local) throw new Error(`No local store for entity: ${entityName}`);
       return local[method](...args);
     }

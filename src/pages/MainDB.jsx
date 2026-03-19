@@ -1,11 +1,11 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, FileSpreadsheet, Database, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, FileSpreadsheet, Database, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { COLUMN_DEFS, COLUMN_GROUPS, flattenRow } from '@/lib/mainDbColumns';
 import { exportToExcel } from '@/lib/excelExport';
 import { useFilterPresets } from '@/hooks/useFilterPresets';
@@ -59,12 +59,31 @@ export default function MainDB() {
   const t = (en, fr) => lang === 'fr' ? fr : en;
 
   const [filters, setFilters]         = useState(EMPTY_FILTERS);
+
+  // Cascade-reset downstream filters when a parent filter changes
+  const setFiltersWithCascade = useCallback((updater) => {
+    setFilters(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      if (next.region !== prev.region) { next.district = ''; next.health_area_name = ''; }
+      if (next.district !== prev.district) next.health_area_name = '';
+      return next;
+    });
+  }, []);
   const [visibility, setVisibility]   = useState(DEFAULT_VISIBILITY);
   const [globalSearch, setGlobalSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const debounceRef = useRef(null);
   const [showFilters, setShowFilters] = useState(true);
   const [exporting, setExporting]     = useState(false);
 
   const { presets, save: savePreset, remove: deletePreset } = useFilterPresets();
+
+  // Debounce search input
+  useEffect(() => {
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setGlobalSearch(searchInput), 200);
+    return () => clearTimeout(debounceRef.current);
+  }, [searchInput]);
 
   // ── Data fetch ─────────────────────────────────────────────────────────────
   const { data: rawEntries = [], isLoading } = useQuery({
@@ -79,15 +98,59 @@ export default function MainDB() {
     [rawEntries]
   );
 
-  // ── Filter options (derived from full dataset) ─────────────────────────────
-  const options = useMemo(() => ({
-    regions:     unique(flatRows, 'region'),
-    districts:   unique(flatRows, 'district'),
-    healthAreas: unique(flatRows, 'health_area_name'),
-    communities: unique(flatRows, 'community'),
-    strategies:  unique(flatRows, 'strategy'),
-    statuses:    unique(flatRows, 'status'),
-  }), [flatRows]);
+  // ── HealthArea entity (authoritative health area list) ──────────────────────
+  const { data: healthAreaEntities = [] } = useQuery({
+    queryKey: ['healthAreas'],
+    queryFn: () => base44.entities.HealthArea.list(),
+    staleTime: 10 * 60 * 1000,
+  });
+
+  // ── GeoJSON (authoritative region/district lists) ─────────────────────────
+  const { data: regionsGeo } = useQuery({
+    queryKey: ['cameroon-regions-geojson'],
+    queryFn: () => fetch('/cameroon-regions.geojson').then(r => r.json()),
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
+  const { data: districtsGeo } = useQuery({
+    queryKey: ['cameroon-districts-geojson'],
+    queryFn: () => fetch('/cameroon-districts.geojson').then(r => r.json()),
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
+
+  // ── Filter options ─────────────────────────────────────────────────────────
+  const options = useMemo(() => {
+    const regions = regionsGeo
+      ? [...new Set(regionsGeo.features.map(f => f.properties.region).filter(Boolean))].sort()
+      : unique(flatRows, 'region');
+
+    const allDistricts = districtsGeo
+      ? districtsGeo.features.map(f => ({ district: f.properties.district, region: f.properties.region }))
+      : flatRows.map(r => ({ district: r.district, region: r.region }));
+
+    const districts = [...new Set(
+      allDistricts
+        .filter(d => !filters.region || d.region === filters.region)
+        .map(d => d.district)
+        .filter(Boolean)
+    )].sort();
+
+    return {
+      regions,
+      districts,
+      healthAreas: [...new Set(
+        healthAreaEntities
+          .filter(ha => !filters.region   || ha.region   === filters.region)
+          .filter(ha => !filters.district || ha.district === filters.district)
+          .map(ha => ha.name)
+          .filter(Boolean)
+      )].sort(),
+      communities: unique(flatRows, 'community'),
+      strategies:  unique(flatRows, 'strategy'),
+      statuses:    unique(flatRows, 'status'),
+    };
+  }, [regionsGeo, districtsGeo, flatRows, healthAreaEntities, filters.region, filters.district]);
 
   // ── Apply filters ──────────────────────────────────────────────────────────
   const filteredRows = useMemo(
@@ -116,12 +179,32 @@ export default function MainDB() {
 
   // ── Preset handlers ────────────────────────────────────────────────────────
   const handleSavePreset = useCallback(name => savePreset(name, filters), [filters, savePreset]);
-  const handleLoadPreset = useCallback(p => setFilters({ ...EMPTY_FILTERS, ...p.filters }), []);
+  const handleLoadPreset = useCallback(p => setFiltersWithCascade({ ...EMPTY_FILTERS, ...p.filters }), [setFiltersWithCascade]);
 
-  // ── Active filter count ────────────────────────────────────────────────────
+  // ── Active filter count + chips ───────────────────────────────────────────
   const activeFilterCount = Object.entries(filters).filter(
     ([k, v]) => k !== 'groupBy' && v !== ''
   ).length + (globalSearch ? 1 : 0);
+
+  const FILTER_LABELS = {
+    region: 'Region', district: 'District', health_area_name: 'Health Area',
+    community: 'Community', strategy: 'Strategy', status: 'Status',
+    scr_stock_out: 'Stock-Out',
+    week_number_from: 'Week ≥', week_number_to: 'Week ≤',
+    year_from: 'Year ≥', year_to: 'Year ≤',
+  };
+
+  const activeChips = [
+    ...Object.entries(filters)
+      .filter(([k, v]) => k !== 'groupBy' && v !== '')
+      .map(([k, v]) => ({ key: k, label: `${FILTER_LABELS[k] ?? k}: ${v}` })),
+    ...(globalSearch ? [{ key: '__search__', label: `Search: ${globalSearch}` }] : []),
+  ];
+
+  const clearChip = useCallback((key) => {
+    if (key === '__search__') { setSearchInput(''); setGlobalSearch(''); return; }
+    setFiltersWithCascade(f => ({ ...f, [key]: '' }));
+  }, [setFiltersWithCascade]);
 
   // ── Excel export ───────────────────────────────────────────────────────────
   const handleExport = useCallback(async () => {
@@ -169,7 +252,9 @@ export default function MainDB() {
             disabled={exporting || filteredRows.length === 0}
           >
             <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
-            {exporting ? t('Exporting…', 'Export…') : t('Export Excel', 'Exporter Excel')}
+            {exporting
+              ? t('Exporting…', 'Export…')
+              : t(`Export ${filteredRows.length.toLocaleString()} rows`, `Exporter ${filteredRows.length.toLocaleString()} lignes`)}
           </Button>
         </div>
       </div>
@@ -180,8 +265,8 @@ export default function MainDB() {
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             placeholder={t('Quick search…', 'Recherche rapide…')}
-            value={globalSearch}
-            onChange={e => setGlobalSearch(e.target.value)}
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
             className="pl-8 h-8 text-xs"
           />
         </div>
@@ -198,13 +283,30 @@ export default function MainDB() {
         </Button>
       </div>
 
+      {/* ── Active filter chips ── */}
+      {activeChips.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {activeChips.map(chip => (
+            <span
+              key={chip.key}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 text-[11px] font-medium"
+            >
+              {chip.label}
+              <button onClick={() => clearChip(chip.key)} className="hover:text-violet-900 dark:hover:text-violet-100">
+                <X className="h-2.5 w-2.5" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* ── Filter panel ── */}
       {showFilters && (
         <FilterPanel
           filters={filters}
-          setFilters={setFilters}
+          setFilters={setFiltersWithCascade}
           options={options}
-          onReset={() => setFilters(EMPTY_FILTERS)}
+          onReset={() => setFiltersWithCascade(EMPTY_FILTERS)}
         />
       )}
 
@@ -222,12 +324,16 @@ export default function MainDB() {
       ) : (
         <>
           {/* ── Virtualized table ── */}
-          <VirtualTable
-            rows={filteredRows}
-            visibleCols={visibleCols}
-            groupBy={filters.groupBy || undefined}
-            globalFilter={globalSearch}
-          />
+          <div className={activeFilterCount > 0 ? 'transition-opacity duration-150' : ''}>
+            <VirtualTable
+              rows={filteredRows}
+              visibleCols={visibleCols}
+              groupBy={filters.groupBy || undefined}
+              globalFilter={globalSearch}
+              onClearFilters={() => { setFiltersWithCascade(EMPTY_FILTERS); setSearchInput(''); setGlobalSearch(''); }}
+              hasActiveFilters={activeFilterCount > 0}
+            />
+          </div>
 
           {/* ── Footer totals ── */}
           <FooterTotals rows={filteredRows} visibleCols={visibleCols} />

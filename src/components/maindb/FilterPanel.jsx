@@ -18,7 +18,7 @@ export default function FilterPanel({ filters, setFilters, options, onReset }) {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={ALL}>All</SelectItem>
-          {opts.map(o => <SelectItem key={o} value={o}>{o || '(blank)'}</SelectItem>)}
+          {opts.filter(o => o !== '').map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
         </SelectContent>
       </Select>
     </div>
@@ -46,7 +46,7 @@ export default function FilterPanel({ filters, setFilters, options, onReset }) {
   );
 
   return (
-    <div className="bg-muted/40 border rounded-lg p-3 space-y-3">
+    <div className="bg-muted/40 border rounded-lg p-3 space-y-3 animate-in slide-in-from-top-2 duration-150">
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold">Filters</span>
         <Button variant="ghost" size="sm" className="h-6 text-xs gap-1 text-muted-foreground" onClick={onReset}>
@@ -79,12 +79,12 @@ export default function FilterPanel({ filters, setFilters, options, onReset }) {
         </div>
         <div className="flex flex-col gap-1">
           <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">Group by</span>
-          <Select value={filters.groupBy || ''} onValueChange={v => set('groupBy', v)}>
+          <Select value={filters.groupBy || '__none__'} onValueChange={v => set('groupBy', v === '__none__' ? '' : v)}>
             <SelectTrigger className="h-8 text-xs">
               <SelectValue placeholder="None" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">None</SelectItem>
+              <SelectItem value="__none__">None</SelectItem>
               <SelectItem value="region">Region</SelectItem>
               <SelectItem value="district">District</SelectItem>
               <SelectItem value="health_area_name">Health Area</SelectItem>

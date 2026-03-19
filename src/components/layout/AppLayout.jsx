@@ -4,11 +4,13 @@ import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
 import { PeriodProvider, usePeriod } from '@/lib/PeriodContext';
+import { useAuth } from '@/lib/AuthContext';
+import { base44 } from '@/api/base44Client';
 import { History, Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Historical routes that trigger historical mode automatically
-const HISTORICAL_PATHS = ['/HistoryDB', '/AggregatedDashboard', '/MapsCoverage', '/ExportsMigration', '/MainDB', '/main-db', '/history'];
+const HISTORICAL_PATHS = ['/MainDB', '/MapsCoverage', '/ExportsMigration'];
 // Current-reporting routes (weekly entry — never show period selector)
 const ENTRY_PATHS = ['/DataEntry'];
 
@@ -16,6 +18,7 @@ function LayoutInner({ lang, setLang }) {
   const [dark, setDark] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { appMode, setAppMode, selectedWeek, setSelectedWeek } = usePeriod();
+  const { isOnline } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -44,10 +47,10 @@ function LayoutInner({ lang, setLang }) {
         sidebarOpen={sidebarOpen}
         showPeriodSelector={!isEntryPage}
       />
-      <Sidebar lang={lang} open={sidebarOpen} onClose={() => setSidebarOpen(false)} appMode={appMode} />
+      <Sidebar lang={lang} open={sidebarOpen} onClose={() => setSidebarOpen(false)} appMode={appMode} navTop={base44.isLocal || !isOnline ? 24 : 0} />
       <BottomNav lang={lang} />
 
-      <main className="pt-16 pb-20 lg:pb-0 lg:pl-60 min-h-screen">
+      <main className={(base44.isLocal || !isOnline) ? 'pt-[88px] pb-20 lg:pb-0 lg:pl-60 min-h-screen' : 'pt-16 pb-20 lg:pb-0 lg:pl-60 min-h-screen'}>
         {/* Mode banner */}
         {isHistorical ? (
           <div className="sticky top-16 z-30 flex items-center gap-2 px-4 py-2 bg-violet-600 text-white text-xs font-medium">

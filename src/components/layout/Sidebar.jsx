@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, ClipboardEdit, TableProperties, FileBarChart, Map,
-  Settings, Bookmark, History, BarChart3, MapPin, FileDown, Radio, Table2
+  LayoutDashboard, ClipboardEdit, TableProperties,
+  Settings, History, BarChart3, MapPin, FileDown, Table2, Book
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -10,15 +10,10 @@ const currentItems = [
   { path: '/Dashboard', icon: LayoutDashboard, label: { en: 'Dashboard', fr: 'Tableau de bord' } },
   { path: '/DataEntry', icon: ClipboardEdit, label: { en: 'Live Weekly Entry', fr: 'Saisie hebdomadaire' } },
   { path: '/HealthAreas', icon: TableProperties, label: { en: 'Health Areas', fr: 'Aires de santé' } },
-  { path: '/Reports', icon: FileBarChart, label: { en: 'Reports', fr: 'Rapports' } },
-  { path: '/Analytics', icon: Map, label: { en: 'Analytics & Maps', fr: 'Analyses & Cartes' } },
-  { path: '/OneTimeIndicators', icon: Bookmark, label: { en: 'One-Time Indicators', fr: 'Indicateurs ponctuels' } },
 ];
 
 const historicalItems = [
   { path: '/MainDB', icon: Table2, label: { en: 'Main Database', fr: 'Base principale' } },
-  { path: '/HistoryDB', icon: History, label: { en: 'History Browser', fr: 'Historique & BD' } },
-  { path: '/AggregatedDashboard', icon: BarChart3, label: { en: 'Aggregated Dashboard', fr: 'Tableau agrégé' } },
   { path: '/MapsCoverage', icon: MapPin, label: { en: 'Maps & Coverage', fr: 'Cartes & Couverture' } },
   { path: '/ExportsMigration', icon: FileDown, label: { en: 'Exports & Migration', fr: 'Exports & Migration' } },
 ];
@@ -50,16 +45,19 @@ function NavGroup({ title, items, lang, location, onClose, accent }) {
   );
 }
 
-export default function Sidebar({ lang, open, onClose }) {
+export default function Sidebar({ lang, open, onClose, navTop = 0 }) {
   const location = useLocation();
+  const sidebarTop = navTop + 64; // navbar height is always h-16 = 64px
 
   return (
     <>
       {open && <div className="fixed inset-0 bg-black/30 z-40 lg:hidden" onClick={onClose} />}
-      <aside className={cn(
-        'fixed top-16 left-0 bottom-0 z-40 w-60 bg-card border-r border-border transition-transform duration-200 flex flex-col',
-        open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-      )}>
+      <aside
+        style={{ top: sidebarTop }}
+        className={cn(
+          'fixed left-0 bottom-0 z-40 w-60 bg-card border-r border-border transition-transform duration-200 flex flex-col',
+          open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        )}>
         <nav className="flex-1 py-3 px-3 space-y-0 overflow-y-auto">
           <NavGroup
             title={lang === 'fr' ? 'Rapport actif' : 'Active Reporting'}
@@ -82,6 +80,20 @@ export default function Sidebar({ lang, open, onClose }) {
           />
 
           <div className="my-2 border-t border-border" />
+
+          <Link
+            to="/UserManual"
+            onClick={onClose}
+            className={cn(
+              'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+              location.pathname === '/UserManual'
+                ? 'bg-primary/10 text-primary'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+            )}
+          >
+            <Book style={{ width: 18, height: 18 }} className="shrink-0" />
+            {lang === 'fr' ? 'Manuel d\'utilisation' : 'User Manual'}
+          </Link>
 
           <Link
             to="/Settings"

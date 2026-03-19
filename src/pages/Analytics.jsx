@@ -55,8 +55,8 @@ export default function Analytics() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-72 min-w-0">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={barData}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-30} textAnchor="end" height={60} />
@@ -77,9 +77,9 @@ export default function Analytics() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-72">
+            <div className="h-72 min-w-0">
               {pieData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                   <PieChart>
                     <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={4} dataKey="value">
                       {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}

@@ -108,8 +108,8 @@ export default function AggregatedDashboard() {
             <CardTitle className="text-sm font-semibold">{t('Weekly Trend', 'Tendance hebdomadaire')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-64 min-w-0">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <LineChart data={weeklyTrend}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis dataKey="week" tick={{ fontSize: 10 }} />
@@ -129,8 +129,8 @@ export default function AggregatedDashboard() {
             <CardTitle className="text-sm font-semibold">{t('Top Districts by Coverage', 'Top districts par couverture')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-64 min-w-0">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={districtData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis type="number" tick={{ fontSize: 10 }} />

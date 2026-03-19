@@ -2,7 +2,7 @@
 // Mirrors the base44 SDK entity API: list, filter, get, create, update, delete.
 
 const DB_NAME = 'verhus_db';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const STORES = ['WeeklyEntry', 'HealthArea', 'District', 'Alert'];
 
 let _db = null;
@@ -53,7 +53,8 @@ function putAll(storeName, rows) {
   }));
 }
 
-const genId = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+let _idCounter = 0;
+const genId = () => Math.random().toString(36).slice(2, 10) + (Date.now() + _idCounter++).toString(36);
 
 function makeEntityStore(name) {
   return {
@@ -77,7 +78,7 @@ function makeEntityStore(name) {
 }
 
 // ─── Seed ────────────────────────────────────────────────────────────────────
-const SEED_KEY = 'verhus_idb_seeded_v3';
+const SEED_KEY = 'verhus_idb_seeded_v5';
 
 const VACCINES = ['BCG','OPV0','OPV1','OPV2','OPV3','IPV1','IPV2',
   'Penta1','Penta2','Penta3','PCV1','PCV2','PCV3','Rota1','Rota2',

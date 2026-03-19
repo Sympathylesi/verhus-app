@@ -41,7 +41,7 @@ function buildTanstackColumns(visibleCols) {
   );
 }
 
-export default function VirtualTable({ rows, visibleCols, groupBy, globalFilter }) {
+export default function VirtualTable({ rows, visibleCols, groupBy, globalFilter, onClearFilters, hasActiveFilters }) {
   const parentRef = useRef(null);
 
   const columns = useMemo(() => buildTanstackColumns(visibleCols), [visibleCols]);
@@ -171,8 +171,16 @@ export default function VirtualTable({ rows, visibleCols, groupBy, globalFilter 
       </table>
 
       {tableRows.length === 0 && (
-        <div className="flex items-center justify-center h-40 text-sm text-muted-foreground">
-          No records match the current filters
+        <div className="flex flex-col items-center justify-center h-40 gap-2 text-sm text-muted-foreground">
+          <span>No records match the current filters</span>
+          {hasActiveFilters && onClearFilters && (
+            <button
+              onClick={onClearFilters}
+              className="text-xs text-violet-600 hover:underline"
+            >
+              Clear all filters
+            </button>
+          )}
         </div>
       )}
     </div>

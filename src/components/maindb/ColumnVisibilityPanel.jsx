@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Columns3 } from 'lucide-react';
@@ -7,6 +8,7 @@ import { COLUMN_GROUPS, COLUMN_DEFS } from '@/lib/mainDbColumns';
 
 export default function ColumnVisibilityPanel({ visibility, onToggle, onToggleGroup }) {
   const [openGroup, setOpenGroup] = useState(null);
+  const hiddenCount = COLUMN_DEFS.filter(c => visibility[c.id] === false).length;
 
   return (
     <Popover>
@@ -14,6 +16,9 @@ export default function ColumnVisibilityPanel({ visibility, onToggle, onToggleGr
         <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
           <Columns3 className="h-3.5 w-3.5" />
           Columns
+          {hiddenCount > 0 && (
+            <Badge className="h-4 px-1 text-[9px] bg-muted-foreground/60">{hiddenCount} hidden</Badge>
+          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-3 max-h-[70vh] overflow-y-auto" align="end">

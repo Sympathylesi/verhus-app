@@ -14,12 +14,8 @@ import PageNotFound from './lib/PageNotFound';
 import Dashboard from './pages/Dashboard';
 import DataEntry from './pages/DataEntry';
 import HealthAreas from './pages/HealthAreas';
-import Reports from './pages/Reports';
-import Analytics from './pages/Analytics';
-import OneTimeIndicators from './pages/OneTimeIndicators';
 import Settings from './pages/Settings';
-import HistoryDB from './pages/HistoryDB';
-import AggregatedDashboard from './pages/AggregatedDashboard';
+import UserManual from './pages/UserManual';
 import MapsCoverage from './pages/MapsCoverage';
 import ExportsMigration from './pages/ExportsMigration';
 import MainDB from './pages/MainDB';
@@ -73,19 +69,22 @@ function AppRoutes() {
           <Route path="/" element={<Navigate to="/Dashboard" replace />} />
           <Route path="/Dashboard" element={<Dashboard />} />
           <Route path="/HealthAreas" element={<HealthAreas />} />
-          <Route path="/Reports" element={<Reports />} />
-          <Route path="/Analytics" element={<Analytics />} />
+          <Route path="/UserManual" element={<UserManual />} />
           <Route path="/Settings" element={<Settings />} />
-          <Route path="/OneTimeIndicators" element={<OneTimeIndicators />} />
 
           {/* Historical / analysis routes */}
-          <Route path="/HistoryDB" element={<HistoryDB />} />
-          <Route path="/AggregatedDashboard" element={<AggregatedDashboard />} />
+          <Route path="/MainDB" element={<MainDB />} />
           <Route path="/MapsCoverage" element={<MapsCoverage />} />
           <Route path="/ExportsMigration" element={<ExportsMigration />} />
-          <Route path="/MainDB" element={<MainDB />} />
-          <Route path="/main-db" element={<MainDB />} />
-          <Route path="/history" element={<MainDB />} />
+
+          {/* Redirect removed routes to sensible replacements */}
+          <Route path="/Reports" element={<Navigate to="/ExportsMigration" replace />} />
+          <Route path="/Analytics" element={<Navigate to="/MapsCoverage" replace />} />
+          <Route path="/OneTimeIndicators" element={<Navigate to="/Dashboard" replace />} />
+          <Route path="/HistoryDB" element={<Navigate to="/MainDB" replace />} />
+          <Route path="/AggregatedDashboard" element={<Navigate to="/Dashboard" replace />} />
+          <Route path="/main-db" element={<Navigate to="/MainDB" replace />} />
+          <Route path="/history" element={<Navigate to="/MainDB" replace />} />
 
           {/* Collector + Supervisor + Admin */}
           <Route element={<RequireRole roles={['collector', 'supervisor', 'admin']} />}>
@@ -103,7 +102,7 @@ export default function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <Router>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <AppRoutes />
         </Router>
         <Toaster richColors position="top-right" />

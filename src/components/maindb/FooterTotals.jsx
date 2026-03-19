@@ -19,7 +19,7 @@ export default function FooterTotals({ rows, visibleCols }) {
   const mcv2Pct = totalChildren > 0 ? ((mcv2 / totalChildren) * 100).toFixed(1) : '–';
 
   return (
-    <div className="flex flex-wrap items-center gap-x-6 gap-y-1 px-3 py-2 bg-muted/60 border-t text-xs">
+    <div className="sticky bottom-0 flex flex-wrap items-center gap-x-6 gap-y-1 px-3 py-2 bg-muted/60 border-t text-xs z-10">
       <span className="font-semibold text-muted-foreground">Totals ({rows.length.toLocaleString()} rows):</span>
       {totalChildren > 0 && (
         <span>Children: <strong>{totalChildren.toLocaleString()}</strong></span>
