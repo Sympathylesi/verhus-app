@@ -12,6 +12,7 @@ import StepMetadata from '../components/dataentry/StepMetadata';
 import StepEngagement from '../components/dataentry/StepEngagement';
 import StepScreening from '../components/dataentry/StepScreening';
 import StepSessions from '../components/dataentry/StepSessions';
+import StepReport from '../components/dataentry/StepReport';
 import StepDoses from '../components/dataentry/StepDoses';
 import StepReview from '../components/dataentry/StepReview';
 
@@ -38,7 +39,13 @@ export default function DataEntry() {
     district: prefillDistrict || '',
     health_area_id: prefillHaId || '',
     health_area_name: prefillHaName || '',
-    strategy: '',
+    has_humanitarian: false,
+    humanitarian: {},
+    report_template: {},
+    strategies: {},
+    other_variables: {},
+    stockouts: {},
+    session_dates: {},
     community_engagement: {},
     screening: { fridge_functional: true },
     vaccination_sessions: {},
@@ -93,13 +100,9 @@ export default function DataEntry() {
     const totalDoses = Object.values(vaccines).reduce((s, v) =>
       s + Object.values(v || {}).reduce((ss, n) => ss + (typeof n === 'number' ? n : 0), 0), 0
     );
-    const sessions = d.vaccination_sessions || {};
-    const totalChildren = Object.values(sessions).reduce((s, type) =>
-      s + Object.values(type || {}).reduce((ss, n) => ss + (typeof n === 'number' ? n : 0), 0), 0
-    );
     const dtp3 = Object.values(vaccines['Penta3'] || {}).reduce((s, n) => s + (typeof n === 'number' ? n : 0), 0);
-    const mcv2 = Object.values(vaccines['MCV2'] || {}).reduce((s, n) => s + (typeof n === 'number' ? n : 0), 0);
-    return { ...d, total_doses_administered: totalDoses, total_children_vaccinated: totalChildren, dtp3_count: dtp3, mcv2_count: mcv2 };
+    const mcv2 = Object.values(vaccines['MCV2 (MR2)'] || {}).reduce((s, n) => s + (typeof n === 'number' ? n : 0), 0);
+    return { ...d, total_doses_administered: totalDoses, total_children_vaccinated: totalDoses, dtp3_count: dtp3, mcv2_count: mcv2 };
   };
 
   const saveMutation = useMutation({
@@ -180,11 +183,12 @@ export default function DataEntry() {
 
       <div className="min-h-[400px]">
         {step === 0 && <StepMetadata lang={lang} data={data} setData={setData} healthAreas={healthAreas} geoRegions={geoRegions} />}
-        {step === 1 && <StepEngagement lang={lang} data={data} setData={setData} />}
-        {step === 2 && <StepScreening lang={lang} data={data} setData={setData} />}
-        {step === 3 && <StepSessions lang={lang} data={data} setData={setData} />}
+        {step === 1 && <StepSessions lang={lang} data={data} setData={setData} />}
+        {step === 2 && <StepReport lang={lang} data={data} setData={setData} />}
+        {step === 3 && <StepEngagement lang={lang} data={data} setData={setData} />}
         {step === 4 && <StepDoses lang={lang} data={data} setData={setData} />}
-        {step === 5 && <StepReview lang={lang} data={data} setData={setData} />}
+        {step === 5 && <StepScreening lang={lang} data={data} setData={setData} />}
+        {step === 6 && <StepReview lang={lang} data={data} setData={setData} />}
       </div>
 
       {/* Navigation */}
@@ -200,7 +204,7 @@ export default function DataEntry() {
         </Button>
 
         <div className="flex gap-2">
-          {step === 5 ? (
+          {step === 6 ? (
             <>
               <Button
                 variant="outline"

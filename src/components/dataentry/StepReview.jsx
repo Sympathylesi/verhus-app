@@ -9,40 +9,49 @@ export default function StepReview({ lang, data, setData }) {
   const t = (en, fr) => lang === 'fr' ? fr : en;
 
   const vaccines = data.vaccine_doses || {};
-  const totalDoses = Object.values(vaccines).reduce((s, v) =>
+  const totalVaccinated = Object.values(vaccines).reduce((s, v) =>
     s + Object.values(v || {}).reduce((ss, n) => ss + (typeof n === 'number' ? n : 0), 0), 0
-  );
-
-  const sessions = data.vaccination_sessions || {};
-  const totalChildren = Object.values(sessions).reduce((s, type) =>
-    s + Object.values(type || {}).reduce((ss, n) => ss + (typeof n === 'number' ? n : 0), 0), 0
   );
 
   const screening = data.screening || {};
   const engagement = data.community_engagement || {};
-  const totalEngaged = Object.values(engagement).reduce((s, g) => s + (g?.count || 0), 0);
+  const session_dates = data.session_dates || {};
+
+  const totalEngaged = Object.values(engagement).reduce((s, g) =>
+    s + Object.values(g || {}).reduce((ss, lvl) =>
+      ss + (typeof lvl === 'object' ? (lvl.male || 0) + (lvl.female || 0) : 0), 0), 0);
+
+  const totalScreened = ['sam', 'mam'].reduce((s, mt) =>
+    s + ['0_11m', '12_23m', '24_59m'].reduce((ss, ab) =>
+      ss + ['male', 'female'].reduce((sss, g) => sss + (screening[`${mt}_${g}_${ab}`] || 0), 0), 0), 0
+  );
 
   const dtp3 = Object.values(vaccines['Penta3'] || {}).reduce((s, n) => s + (typeof n === 'number' ? n : 0), 0);
-  const mcv2 = Object.values(vaccines['MCV2'] || {}).reduce((s, n) => s + (typeof n === 'number' ? n : 0), 0);
+  const mcv2 = Object.values(vaccines['MCV2 (MR2)'] || {}).reduce((s, n) => s + (typeof n === 'number' ? n : 0), 0);
 
-  // Blocking errors (prevent submit)
+  const screeningOverflow = totalScreened > totalVaccinated && totalVaccinated > 0;
+
+  // Blocking errors
   const errors = [];
   if (!data.district) errors.push(t('No district selected', 'Aucun district sélectionné'));
   if (!data.health_area_id) errors.push(t('No health area selected', 'Aucune aire de santé sélectionnée'));
   if (!data.week_number) errors.push(t('Week number missing', 'Numéro de semaine manquant'));
-  if (totalDoses === 0) errors.push(t('No vaccine doses entered', 'Aucune dose de vaccin saisie'));
+  if (totalVaccinated === 0) errors.push(t('No vaccine doses entered', 'Aucune dose de vaccin saisie'));
+  if (screeningOverflow) errors.push(t('Screened count exceeds vaccinated count', 'Nombre dépistés supérieur aux vaccinés'));
 
-  // Warnings (allow submit but flag)
+  // Warnings
   const warnings = [];
   if (screening.stock_out) warnings.push(t('Stock-out reported', 'Rupture de stock signalée'));
   if (screening.adverse_events > 0) warnings.push(t(`${screening.adverse_events} adverse event(s)`, `${screening.adverse_events} événement(s) indésirable(s)`));
   if (!screening.fridge_functional) warnings.push(t('Refrigerator non-functional', 'Réfrigérateur non fonctionnel'));
-  if (totalChildren === 0) warnings.push(t('No session children recorded', 'Aucun enfant en session enregistré'));
+  if (totalEngaged === 0) warnings.push(t('No community engagement recorded', 'Aucun engagement communautaire enregistré'));
 
-  const sessionBreakdown = Object.entries(sessions).map(([type, vals]) => ({
-    type,
-    total: Object.values(vals || {}).reduce((s, n) => s + (typeof n === 'number' ? n : 0), 0),
-  })).filter(s => s.total > 0);
+  const DATE_LABELS = {
+    start_date:      { en: 'Start Date',      fr: 'Date de début' },
+    end_date:        { en: 'End Date',        fr: 'Date de fin' },
+    date_of_session: { en: 'Date of Session', fr: 'Date de session' },
+    date_received:   { en: 'Date Received',   fr: 'Date de réception' },
+  };
 
   return (
     <div className="space-y-4 max-w-2xl">
@@ -52,7 +61,7 @@ export default function StepReview({ lang, data, setData }) {
           <CardHeader className="pb-2 pt-4">
             <CardTitle className="text-sm flex items-center gap-2 text-red-700 dark:text-red-400">
               <XCircle className="h-4 w-4" />
-              {t('Cannot submit — fix these first', 'Impossible de soumettre — corrigez d\'abord')}
+              {t('Cannot submit — fix these first', "Impossible de soumettre — corrigez d'abord")}
             </CardTitle>
           </CardHeader>
           <CardContent className="pb-4">
@@ -113,22 +122,48 @@ export default function StepReview({ lang, data, setData }) {
               <p className="font-medium mt-0.5">W{data.week_number} / {data.year}</p>
             </div>
           </div>
-          {data.strategy && (
+          {data.strategies && Object.keys(data.strategies).some(k => data.strategies[k]) && (
             <div className="mt-3">
-              <p className="text-xs text-muted-foreground mb-1">{t('Strategy', 'Stratégie')}</p>
-              <Badge variant="outline">{data.strategy}</Badge>
+              <p className="text-xs text-muted-foreground mb-1">{t('Strategies', 'Stratégies')}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {Object.entries(data.strategies).filter(([, v]) => v).map(([s, approach]) => (
+                  <Badge key={s} variant="outline" className="text-xs">
+                    {s} — {approach.replace(/_/g, ' ')}
+                  </Badge>
+                ))}
+              </div>
             </div>
           )}
         </CardContent>
       </Card>
 
+      {/* Session dates */}
+      {Object.values(session_dates).some(Boolean) && (
+        <Card>
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-semibold">{t('Session Dates', 'Dates de session')}</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {Object.entries(DATE_LABELS).map(([key, label]) => (
+                <div key={key}>
+                  <p className="text-xs text-muted-foreground">{label[lang]}</p>
+                  <p className="font-medium mt-0.5 text-sm">{session_dates[key] || '–'}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* KPI summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { icon: Users,      label: t('Children', 'Enfants'),    value: totalChildren, color: 'text-sky-600' },
-          { icon: Syringe,    label: t('Total Doses', 'Doses'),   value: totalDoses,    color: 'text-emerald-600' },
-          { icon: Syringe,    label: 'DTP3',                      value: dtp3,          color: 'text-violet-600' },
-          { icon: Syringe,    label: 'MCV2',                      value: mcv2,          color: 'text-amber-600' },
+          { icon: Syringe, label: t('Vaccinated', 'Vaccinés'),      value: totalVaccinated, color: 'text-emerald-600' },
+          { icon: Users,   label: t('Screened',   'Dépistés'),      value: totalScreened,   color: screeningOverflow ? 'text-red-600' : 'text-sky-600' },
+          { icon: Syringe, label: 'DTP3 (Penta3)',                  value: dtp3,            color: 'text-violet-600' },
+          { icon: Syringe, label: 'MCV2',                           value: mcv2,            color: 'text-amber-600' },
         ].map(({ icon: Icon, label, value, color }) => (
           <Card key={label} className="p-4">
             <div className="flex items-center gap-2 mb-1">
@@ -139,23 +174,6 @@ export default function StepReview({ lang, data, setData }) {
           </Card>
         ))}
       </div>
-
-      {/* Session breakdown */}
-      {sessionBreakdown.length > 0 && (
-        <Card>
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">{t('Sessions by Strategy', 'Sessions par stratégie')}</p>
-            <div className="flex flex-wrap gap-2">
-              {sessionBreakdown.map(s => (
-                <div key={s.type} className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-lg text-xs">
-                  <span className="font-medium capitalize">{s.type.replace('_', ' ')}</span>
-                  <span className="font-bold text-primary">{s.total}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Screening flags */}
       {(screening.stock_out || !screening.fridge_functional || screening.adverse_events > 0 || screening.disability_count > 0) && (
@@ -181,11 +199,35 @@ export default function StepReview({ lang, data, setData }) {
           <CardContent className="pt-4 pb-4">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">{t('Community Engagement', 'Engagement communautaire')}</p>
             <div className="flex flex-wrap gap-2 text-xs">
-              {Object.entries(engagement).map(([group, val]) => val?.count > 0 && (
-                <div key={group} className="flex items-center gap-1.5 px-3 py-1.5 bg-muted rounded-lg">
-                  <span className="capitalize">{group}</span>
-                  <span className="font-bold">{val.count}</span>
-                  {val.level && <Badge variant="outline" className="text-[10px] h-4 px-1">{val.level}</Badge>}
+              {Object.entries(engagement).map(([group, levels]) => {
+                const total = Object.values(levels || {}).reduce((s, lvl) =>
+                  s + (typeof lvl === 'object' ? (lvl.male || 0) + (lvl.female || 0) : 0), 0);
+                return total > 0 && (
+                  <div key={group} className="flex items-center gap-1.5 px-3 py-1.5 bg-muted rounded-lg">
+                    <span className="capitalize">{group}</span>
+                    <span className="font-bold">{total}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Humanitarian integration */}
+      {data.has_humanitarian && (
+        <Card>
+          <CardContent className="pt-4 pb-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">{t('Humanitarian Integration', 'Intégration humanitaire')}</p>
+            {data.humanitarian_actor && (
+              <p className="text-xs mb-2">{t('Actor', 'Acteur')}: <span className="font-medium">{data.humanitarian_actor}</span></p>
+            )}
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(data.humanitarian || {}).filter(([, v]) => (v.items || 0) + (v.male || 0) + (v.female || 0) > 0).map(([key, val]) => (
+                <div key={key} className="px-2.5 py-1.5 bg-teal-50 dark:bg-teal-950/20 rounded-lg text-xs">
+                  <span className="font-medium capitalize">{key.replace(/_/g, ' ')}</span>
+                  {val.items > 0 && <span className="ml-1 text-muted-foreground">×{val.items}</span>}
+                  {(val.male > 0 || val.female > 0) && <span className="ml-1 text-muted-foreground">({val.male || 0}M/{val.female || 0}F)</span>}
                 </div>
               ))}
             </div>

@@ -5,7 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, Calendar } from 'lucide-react';
 
-const STRATEGIES = ['Fixed', 'Mobile', 'Outreach', 'Door-to-Door'];
+const STRATEGIES = ['Fixed', 'Mobile', 'Outreach'];
+const APPROACHES = [
+  { key: 'door_to_door', label: { en: 'Door-to-Door', fr: 'Porte-à-porte' } },
+  { key: 'temporal',     label: { en: 'Temporal',     fr: 'Temporaire' } },
+  { key: 'quick',        label: { en: 'Quick In & Out', fr: 'Rapide' } },
+];
 
 function weekDateRange(year, week) {
   const jan4 = new Date(year, 0, 4);
@@ -141,23 +146,40 @@ export default function StepMetadata({ lang, data, setData, healthAreas, geoRegi
 
       {/* Strategy */}
       <Card>
-        <CardContent className="pt-4 space-y-3">
-          <Label className="text-sm font-semibold">{t('Vaccination Strategy', 'Stratégie de vaccination')}</Label>
-          <div className="flex flex-wrap gap-2">
-            {STRATEGIES.map(s => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setData(prev => ({ ...prev, strategy: s }))}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors border ${
-                  data.strategy === s
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-background text-muted-foreground border-border hover:bg-muted'
-                }`}
-              >
-                {s}
-              </button>
-            ))}
+        <CardContent className="pt-4 space-y-4">
+          <Label className="text-sm font-semibold">{t('Vaccination Strategies', 'Stratégies de vaccination')}</Label>
+          <p className="text-xs text-muted-foreground -mt-2">{t('Select an approach for each strategy used', 'Sélectionnez une approche pour chaque stratégie utilisée')}</p>
+          <div className="space-y-3">
+            {STRATEGIES.map(s => {
+              const selected = data.strategies?.[s];
+              return (
+                <div key={s} className="space-y-1.5">
+                  <p className="text-xs font-medium text-foreground">{s}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {APPROACHES.map(a => (
+                      <button
+                        key={a.key}
+                        type="button"
+                        onClick={() => setData(prev => ({
+                          ...prev,
+                          strategies: {
+                            ...(prev.strategies || {}),
+                            [s]: prev.strategies?.[s] === a.key ? undefined : a.key,
+                          }
+                        }))}
+                        className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors border ${
+                          selected === a.key
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-background text-muted-foreground border-border hover:bg-muted'
+                        }`}
+                      >
+                        {a.label[lang]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>

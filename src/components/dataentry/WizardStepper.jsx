@@ -4,11 +4,12 @@ import { Check } from 'lucide-react';
 
 const steps = [
   { key: 'metadata',   label: { en: 'Location & Period', fr: 'Lieu & Période' } },
-  { key: 'engagement', label: { en: 'Engagement',        fr: 'Engagement' } },
-  { key: 'screening',  label: { en: 'Screening',         fr: 'Dépistage' } },
   { key: 'sessions',   label: { en: 'Sessions',          fr: 'Sessions' } },
+  { key: 'report',     label: { en: 'Report',            fr: 'Rapport' } },
+  { key: 'engagement', label: { en: 'Engagement',        fr: 'Engagement' } },
   { key: 'doses',      label: { en: 'Vaccine Doses',     fr: 'Doses vaccin' } },
-  { key: 'review',     label: { en: 'Review',            fr: 'Révision' } },
+  { key: 'screening',    label: { en: 'Screening',        fr: 'Dépistage' } },
+  { key: 'review',       label: { en: 'Review',           fr: 'Révision' } },
 ];
 
 export default function WizardStepper({ current, setCurrent, lang, completedSteps = [] }) {
