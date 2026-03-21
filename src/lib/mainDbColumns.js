@@ -39,8 +39,12 @@ const col = (id, header, group, numeric = false, defaultVisible = true) =>
 
 export const COLUMN_DEFS = [
   // ── Identity ──────────────────────────────────────────────────────────────
-  col('sn',               'S/N',           'Identity', false, true),
-  col('year',             'Year',          'Identity', false, true),
+  col('sn',               'S/N',            'Identity', false, true),
+  col('start_date',       'Start Date',     'Identity', false, true),
+  col('end_date',         'End Date',       'Identity', false, true),
+  col('date_of_session',  'Date of Session','Identity', false, true),
+  col('date_received',    'Date Received',  'Identity', false, true),
+  col('year',             'Year',           'Identity', false, true),
   col('week_number',      'Week',          'Identity', false, true),
   col('region',           'Region',        'Identity', false, true),
   col('district',         'District',      'Identity', false, true),
@@ -103,6 +107,11 @@ export function flattenRow(e, idx) {
   const row = { sn: idx + 1 };
 
   // Identity
+  const sd = e.session_dates || {};
+  row.start_date      = sd.start_date      ?? '';
+  row.end_date        = sd.end_date        ?? '';
+  row.date_of_session = sd.date_of_session ?? '';
+  row.date_received   = sd.date_received   ?? '';
   row.year             = e.year ?? '';
   row.week_number      = e.week_number ?? '';
   row.region           = e.region ?? '';
