@@ -10,7 +10,7 @@ import { History, Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Historical routes that trigger historical mode automatically
-const HISTORICAL_PATHS = ['/MainDB', '/MapsCoverage', '/ExportsMigration'];
+const HISTORICAL_PATHS = ['/MainDB', '/MapsCoverage', '/ExportsMigration', '/CoverageTable', '/Portal'];
 // Current-reporting routes (weekly entry — never show period selector)
 const ENTRY_PATHS = ['/DataEntry'];
 

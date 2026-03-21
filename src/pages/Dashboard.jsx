@@ -74,17 +74,39 @@ export default function Dashboard() {
   const sum = (arr, key) => arr.reduce((s, e) => s + (e[key] || 0), 0);
   const totalTarget = healthAreas.reduce((s, ha) => s + (ha.target_population || ha.population0_11m || 0), 0) || 1;
 
+  const vaccineSum = (arr, vac) => arr.reduce((s, e) => {
+    const doses = e.vaccine_doses?.[vac] || {};
+    return s + Object.values(doses).reduce((a, b) => a + (b || 0), 0);
+  }, 0);
+
+  const OTHER_ANTIGENS = ['BCG','OPV0','OPV1','OPV2','OPV3','IPV1','IPV2',
+    'PCV1','PCV2','PCV3','Rota1','Rota2','Yellow Fever','Vitamin A','HPV'];
+
   const kpiData = {
-    children:    sum(thisWeek, 'total_children_vaccinated'),
-    children_prev: sum(prevWeek, 'total_children_vaccinated'),
-    dtp3:        totalTarget > 0 ? Math.round(sum(thisWeek, 'dtp3_count') / totalTarget * 100) : 0,
-    dtp3_prev:   totalTarget > 0 ? Math.round(sum(prevWeek, 'dtp3_count') / totalTarget * 100) : 0,
-    dtp3_raw:    sum(thisWeek, 'dtp3_count'),
-    mcv2:        totalTarget > 0 ? Math.round(sum(thisWeek, 'mcv2_count') / totalTarget * 100) : 0,
-    mcv2_prev:   totalTarget > 0 ? Math.round(sum(prevWeek, 'mcv2_count') / totalTarget * 100) : 0,
-    mcv2_raw:    sum(thisWeek, 'mcv2_count'),
-    doses:       sum(thisWeek, 'total_doses_administered'),
-    doses_prev:  sum(prevWeek, 'total_doses_administered'),
+    children:       sum(thisWeek, 'total_children_vaccinated'),
+    children_prev:  sum(prevWeek, 'total_children_vaccinated'),
+    penta1:         totalTarget > 0 ? Math.round(vaccineSum(thisWeek, 'Penta1') / totalTarget * 100) : 0,
+    penta1_prev:    totalTarget > 0 ? Math.round(vaccineSum(prevWeek, 'Penta1') / totalTarget * 100) : 0,
+    penta1_raw:     vaccineSum(thisWeek, 'Penta1'),
+    penta3:         totalTarget > 0 ? Math.round(vaccineSum(thisWeek, 'Penta3') / totalTarget * 100) : 0,
+    penta3_prev:    totalTarget > 0 ? Math.round(vaccineSum(prevWeek, 'Penta3') / totalTarget * 100) : 0,
+    penta3_raw:     vaccineSum(thisWeek, 'Penta3'),
+    mcv1:           totalTarget > 0 ? Math.round(vaccineSum(thisWeek, 'MCV1')   / totalTarget * 100) : 0,
+    mcv1_prev:      totalTarget > 0 ? Math.round(vaccineSum(prevWeek, 'MCV1')   / totalTarget * 100) : 0,
+    mcv1_raw:       vaccineSum(thisWeek, 'MCV1'),
+    mcv2:           totalTarget > 0 ? Math.round(sum(thisWeek, 'mcv2_count')    / totalTarget * 100) : 0,
+    mcv2_prev:      totalTarget > 0 ? Math.round(sum(prevWeek, 'mcv2_count')    / totalTarget * 100) : 0,
+    mcv2_raw:       sum(thisWeek, 'mcv2_count'),
+    otherAntigens:  thisWeek.reduce((s, e) => s + OTHER_ANTIGENS.reduce((a, v) => {
+      const doses = e.vaccine_doses?.[v] || {};
+      return a + Object.values(doses).reduce((x, y) => x + (y || 0), 0);
+    }, 0), 0),
+    otherAntigens_prev: prevWeek.reduce((s, e) => s + OTHER_ANTIGENS.reduce((a, v) => {
+      const doses = e.vaccine_doses?.[v] || {};
+      return a + Object.values(doses).reduce((x, y) => x + (y || 0), 0);
+    }, 0), 0),
+    doses:          sum(thisWeek, 'total_doses_administered'),
+    doses_prev:     sum(prevWeek, 'total_doses_administered'),
   };
 
   // ── Historical data ────────────────────────────────────────────────────────

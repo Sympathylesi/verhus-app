@@ -100,11 +100,25 @@ export function useHistoricalData({ periodMode, selectedWeek, dateRange }) {
   }, [entries]);
 
   // Cumulative KPIs
+  const OTHER_ANTIGENS = ['BCG','OPV0','OPV1','OPV2','OPV3','IPV1','IPV2',
+    'PCV1','PCV2','PCV3','Rota1','Rota2','Yellow Fever','Vitamin A','HPV'];
+
+  const vaccineSum = (arr, vac) => arr.reduce((s, e) => {
+    const doses = e.vaccine_doses?.[vac] || {};
+    return s + Object.values(doses).reduce((a, b) => a + (b || 0), 0);
+  }, 0);
+
   const prevKpis = useMemo(() => ({
-    children: sum(prevEntries, 'total_children_vaccinated'),
-    doses:    sum(prevEntries, 'total_doses_administered'),
-    dtp3:     prevEntries.length ? Math.round(sum(prevEntries, 'dtp3_count') / totalTarget * 100) : 0,
-    mcv2:     prevEntries.length ? Math.round(sum(prevEntries, 'mcv2_count') / totalTarget * 100) : 0,
+    children:      sum(prevEntries, 'total_children_vaccinated'),
+    doses:         sum(prevEntries, 'total_doses_administered'),
+    penta1:        prevEntries.length ? Math.round(vaccineSum(prevEntries, 'Penta1') / totalTarget * 100) : 0,
+    penta3:        prevEntries.length ? Math.round(vaccineSum(prevEntries, 'Penta3') / totalTarget * 100) : 0,
+    mcv1:          prevEntries.length ? Math.round(vaccineSum(prevEntries, 'MCV1')   / totalTarget * 100) : 0,
+    mcv2:          prevEntries.length ? Math.round(sum(prevEntries, 'mcv2_count')    / totalTarget * 100) : 0,
+    otherAntigens: prevEntries.reduce((s, e) => s + OTHER_ANTIGENS.reduce((a, v) => {
+      const doses = e.vaccine_doses?.[v] || {};
+      return a + Object.values(doses).reduce((x, y) => x + (y || 0), 0);
+    }, 0), 0),
     sam: prevEntries.reduce((s, e) => {
       const sc = e.screening || {};
       return s + (sc.sam_male_0_11 || 0) + (sc.sam_female_0_11 || 0) + (sc.sam_male_12_23 || 0) + (sc.sam_female_12_23 || 0);
@@ -116,16 +130,16 @@ export function useHistoricalData({ periodMode, selectedWeek, dateRange }) {
   }), [prevEntries, totalTarget]);
 
   const kpis = useMemo(() => ({
-    children: sum(entries, 'total_children_vaccinated'),
-    doses: sum(entries, 'total_doses_administered'),
-    dtp3: entries.length ? Math.round(sum(entries, 'dtp3_count') / totalTarget * 100) : 0,
-    mcv1: entries.length ? Math.round(
-      entries.reduce((s, e) => {
-        const doses = e.vaccine_doses?.MCV1 || {};
-        return s + Object.values(doses).reduce((a, b) => a + b, 0);
-      }, 0) / totalTarget * 100
-    ) : 0,
-    mcv2: entries.length ? Math.round(sum(entries, 'mcv2_count') / totalTarget * 100) : 0,
+    children:      sum(entries, 'total_children_vaccinated'),
+    doses:         sum(entries, 'total_doses_administered'),
+    penta1:        entries.length ? Math.round(vaccineSum(entries, 'Penta1') / totalTarget * 100) : 0,
+    penta3:        entries.length ? Math.round(vaccineSum(entries, 'Penta3') / totalTarget * 100) : 0,
+    mcv1:          entries.length ? Math.round(vaccineSum(entries, 'MCV1')   / totalTarget * 100) : 0,
+    mcv2:          entries.length ? Math.round(sum(entries, 'mcv2_count')    / totalTarget * 100) : 0,
+    otherAntigens: entries.reduce((s, e) => s + OTHER_ANTIGENS.reduce((a, v) => {
+      const doses = e.vaccine_doses?.[v] || {};
+      return a + Object.values(doses).reduce((x, y) => x + (y || 0), 0);
+    }, 0), 0),
     sam: entries.reduce((s, e) => {
       const sc = e.screening || {};
       return s + (sc.sam_male_0_11 || 0) + (sc.sam_female_0_11 || 0) +

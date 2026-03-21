@@ -1,13 +1,16 @@
 import React from 'react';
 import { Card } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Users, Syringe, ShieldCheck, Pill } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, Syringe, ShieldCheck, Pill, FlaskConical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const cards = [
-  { key: 'children', icon: Users,       label: { en: 'Children Vaccinated', fr: 'Enfants vaccinés' },  color: 'text-sky-500',     bg: 'bg-sky-50 dark:bg-sky-950/30' },
-  { key: 'dtp3',     icon: ShieldCheck, label: { en: 'DTP3 Coverage',       fr: 'Couverture DTP3' },   color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-950/30', pct: true },
-  { key: 'mcv2',     icon: Pill,        label: { en: 'MCV2 Completion',     fr: 'Achèvement MCV2' },   color: 'text-violet-500',  bg: 'bg-violet-50 dark:bg-violet-950/30',  pct: true },
-  { key: 'doses',    icon: Syringe,     label: { en: 'Total Doses',         fr: 'Doses totales' },     color: 'text-amber-500',   bg: 'bg-amber-50 dark:bg-amber-950/30' },
+  { key: 'children',     icon: Users,        label: { en: 'Children Vaccinated', fr: 'Enfants vaccinés' },   color: 'text-sky-500',     bg: 'bg-sky-50 dark:bg-sky-950/30' },
+  { key: 'penta1',       icon: ShieldCheck,  label: { en: 'Penta1 Coverage',     fr: 'Couverture Penta1' },  color: 'text-blue-500',    bg: 'bg-blue-50 dark:bg-blue-950/30',    pct: true },
+  { key: 'penta3',       icon: ShieldCheck,  label: { en: 'Penta3 Coverage',     fr: 'Couverture Penta3' },  color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-950/30', pct: true },
+  { key: 'mcv1',         icon: Pill,         label: { en: 'MCV1 Coverage',       fr: 'Couverture MCV1' },    color: 'text-pink-500',    bg: 'bg-pink-50 dark:bg-pink-950/30',    pct: true },
+  { key: 'mcv2',         icon: Pill,         label: { en: 'MCV2 Coverage',       fr: 'Couverture MCV2' },    color: 'text-violet-500',  bg: 'bg-violet-50 dark:bg-violet-950/30', pct: true },
+  { key: 'otherAntigens',icon: FlaskConical, label: { en: 'Other Antigens',      fr: 'Autres antigènes' },   color: 'text-orange-500',  bg: 'bg-orange-50 dark:bg-orange-950/30' },
+  { key: 'doses',        icon: Syringe,      label: { en: 'Total Doses',         fr: 'Doses totales' },      color: 'text-amber-500',   bg: 'bg-amber-50 dark:bg-amber-950/30' },
 ];
 
 function coverageColor(pct) {
@@ -18,14 +21,14 @@ function coverageColor(pct) {
 
 export default function KPICards({ lang, data }) {
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
       {cards.map(card => {
         const val  = data?.[card.key]           ?? 0;
         const prev = data?.[card.key + '_prev'] ?? 0;
         const trend = prev > 0 ? ((val - prev) / prev * 100).toFixed(1) : null;
         const up = Number(trend) > 0;
         // raw count keys for coverage cards
-        const rawKey = card.key === 'dtp3' ? 'dtp3_raw' : card.key === 'mcv2' ? 'mcv2_raw' : null;
+        const rawKey = { dtp3: 'dtp3_raw', mcv2: 'mcv2_raw', penta1: 'penta1_raw', penta3: 'penta3_raw', mcv1: 'mcv1_raw' }[card.key] ?? null;
         const raw = rawKey ? (data?.[rawKey] ?? null) : null;
 
         return (

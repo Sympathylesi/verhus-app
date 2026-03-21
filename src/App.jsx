@@ -19,6 +19,30 @@ import UserManual from './pages/UserManual';
 import MapsCoverage from './pages/MapsCoverage';
 import ExportsMigration from './pages/ExportsMigration';
 import MainDB from './pages/MainDB';
+import CoverageTable from './pages/CoverageTable';
+import PortalHome               from './pages/portal/PortalHome';
+import PortalTargets            from './pages/portal/PortalTargets';
+import PortalServiceOffer       from './pages/portal/PortalServiceOffer';
+import PortalCompleteness       from './pages/portal/PortalCompleteness';
+import PortalMissingReports     from './pages/portal/PortalMissingReports';
+import PortalCompletenessTimeliness from './pages/portal/PortalCompletenessTimeliness';
+import PortalServiceOfferECDF   from './pages/portal/PortalServiceOfferECDF';
+import PortalCompletenessVars   from './pages/portal/PortalCompletenessVars';
+import PortalAntigenFollowup    from './pages/portal/PortalAntigenFollowup';
+import PortalCommunication      from './pages/portal/PortalCommunication';
+import PortalSessionPlanning    from './pages/portal/PortalSessionPlanning';
+import PortalVaccinatedChildren from './pages/portal/PortalVaccinatedChildren';
+import PortalVCAntigens          from './pages/portal/PortalVCAntigens';
+import PortalAnnualComparison    from './pages/portal/PortalAnnualComparison';
+import PortalVaccinationEquity   from './pages/portal/PortalVaccinationEquity';
+import PortalConsistency         from './pages/portal/PortalConsistency';
+import PortalConsistencyOU       from './pages/portal/PortalConsistencyOU';
+import PortalVaccinationStrategy from './pages/portal/PortalVaccinationStrategy';
+import PortalVaccineChildren     from './pages/portal/PortalVaccineChildren';
+import PortalMonitoringLookup    from './pages/portal/PortalMonitoringLookup';
+import PortalPDVCurve            from './pages/portal/PortalPDVCurve';
+import PortalPDVSearch           from './pages/portal/PortalPDVSearch';
+import PortalCoverage           from './pages/portal/PortalCoverage';
 
 // ─── Guards ─────────────────────────────────────────────────────────────────
 function RequireAuth() {
@@ -76,6 +100,33 @@ function AppRoutes() {
           <Route path="/MainDB" element={<MainDB />} />
           <Route path="/MapsCoverage" element={<MapsCoverage />} />
           <Route path="/ExportsMigration" element={<ExportsMigration />} />
+          <Route path="/CoverageTable" element={<CoverageTable />} />
+
+          {/* ── Vaccination Portal sub-pages (inside AppLayout) ── */}
+          <Route path="/Portal/home"                    element={<PortalHome />} />
+          <Route path="/Portal/targets"                 element={<PortalTargets />} />
+          <Route path="/Portal/service-offer"           element={<PortalServiceOffer />} />
+          <Route path="/Portal/completeness"            element={<PortalCompleteness />} />
+          <Route path="/Portal/missing-reports"         element={<PortalMissingReports />} />
+          <Route path="/Portal/completeness-timeliness" element={<PortalCompletenessTimeliness />} />
+          <Route path="/Portal/service-offer-ecdf"      element={<PortalServiceOfferECDF />} />
+          <Route path="/Portal/completeness-vars"       element={<PortalCompletenessVars />} />
+          <Route path="/Portal/antigen-followup"        element={<PortalAntigenFollowup />} />
+          <Route path="/Portal/communication"           element={<PortalCommunication />} />
+          <Route path="/Portal/session-planning"        element={<PortalSessionPlanning />} />
+          <Route path="/Portal/vaccinated-children"     element={<PortalVaccinatedChildren />} />
+          <Route path="/Portal/coverage"                element={<PortalCoverage />} />
+          <Route path="/Portal/vc-antigens"              element={<PortalVCAntigens />} />
+          <Route path="/Portal/annual-comparison"        element={<PortalAnnualComparison />} />
+          <Route path="/Portal/equity"                   element={<PortalVaccinationEquity />} />
+          <Route path="/Portal/consistency"              element={<PortalConsistency />} />
+          <Route path="/Portal/consistency-ou"           element={<PortalConsistencyOU />} />
+          <Route path="/Portal/vaccination-strategy"     element={<PortalVaccinationStrategy />} />
+          <Route path="/Portal/vaccine-children"         element={<PortalVaccineChildren />} />
+          <Route path="/Portal/monitoring-lookup"        element={<PortalMonitoringLookup />} />
+          <Route path="/Portal/pdv-curve"                element={<PortalPDVCurve />} />
+          <Route path="/Portal/pdv-search"               element={<PortalPDVSearch />} />
+          <Route path="/Portal" element={<Navigate to="/Portal/home" replace />} />
 
           {/* Redirect removed routes to sensible replacements */}
           <Route path="/Reports" element={<Navigate to="/ExportsMigration" replace />} />

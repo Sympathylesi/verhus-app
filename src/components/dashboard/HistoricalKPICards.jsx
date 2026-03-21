@@ -1,20 +1,23 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { Users, Syringe, ShieldCheck, AlertTriangle, Package, TrendingUp, TrendingDown } from 'lucide-react';
+import { Users, Syringe, ShieldCheck, AlertTriangle, Package, TrendingUp, TrendingDown, Pill, FlaskConical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const cards = [
-  { key: 'children',     icon: Users,          label: { en: 'Children Vaccinated', fr: 'Enfants vaccinés' },       color: 'text-sky-500',     bg: 'bg-sky-50 dark:bg-sky-950/30' },
-  { key: 'doses',        icon: Syringe,         label: { en: 'Total Doses',         fr: 'Doses totales' },           color: 'text-amber-500',   bg: 'bg-amber-50 dark:bg-amber-950/30' },
-  { key: 'dtp3',         icon: ShieldCheck,     label: { en: 'DTP3 Coverage',       fr: 'Couverture DTP3' },         color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-950/30', pct: true },
-  { key: 'mcv2',         icon: ShieldCheck,     label: { en: 'MCV2 Coverage',       fr: 'Couverture MCV2' },         color: 'text-violet-500',  bg: 'bg-violet-50 dark:bg-violet-950/30',  pct: true },
-  { key: 'sam',          icon: AlertTriangle,   label: { en: 'SAM Cases',           fr: 'Cas MAS' },                 color: 'text-red-500',     bg: 'bg-red-50 dark:bg-red-950/30' },
-  { key: 'humanitarian', icon: Package,         label: { en: 'Humanitarian Items',  fr: 'Articles humanitaires' },   color: 'text-teal-500',    bg: 'bg-teal-50 dark:bg-teal-950/30' },
+  { key: 'children',      icon: Users,          label: { en: 'Children Vaccinated', fr: 'Enfants vaccinés' },       color: 'text-sky-500',     bg: 'bg-sky-50 dark:bg-sky-950/30' },
+  { key: 'penta1',        icon: ShieldCheck,    label: { en: 'Penta1 Coverage',     fr: 'Couverture Penta1' },      color: 'text-blue-500',    bg: 'bg-blue-50 dark:bg-blue-950/30',    pct: true },
+  { key: 'penta3',        icon: ShieldCheck,    label: { en: 'Penta3 Coverage',     fr: 'Couverture Penta3' },      color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-950/30', pct: true },
+  { key: 'mcv1',          icon: Pill,           label: { en: 'MCV1 Coverage',       fr: 'Couverture MCV1' },        color: 'text-pink-500',    bg: 'bg-pink-50 dark:bg-pink-950/30',    pct: true },
+  { key: 'mcv2',          icon: Pill,           label: { en: 'MCV2 Coverage',       fr: 'Couverture MCV2' },        color: 'text-violet-500',  bg: 'bg-violet-50 dark:bg-violet-950/30', pct: true },
+  { key: 'otherAntigens', icon: FlaskConical,   label: { en: 'Other Antigens',      fr: 'Autres antigènes' },       color: 'text-orange-500',  bg: 'bg-orange-50 dark:bg-orange-950/30' },
+  { key: 'doses',         icon: Syringe,        label: { en: 'Total Doses',         fr: 'Doses totales' },          color: 'text-amber-500',   bg: 'bg-amber-50 dark:bg-amber-950/30' },
+  { key: 'sam',           icon: AlertTriangle,  label: { en: 'SAM Cases',           fr: 'Cas MAS' },                color: 'text-red-500',     bg: 'bg-red-50 dark:bg-red-950/30' },
+  { key: 'humanitarian',  icon: Package,        label: { en: 'Humanitarian Items',  fr: 'Articles humanitaires' },  color: 'text-teal-500',    bg: 'bg-teal-50 dark:bg-teal-950/30' },
 ];
 
 export default function HistoricalKPICards({ lang, kpis, prevKpis, loading }) {
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
       {cards.map(card => {
         const val  = kpis?.[card.key]     ?? 0;
         const prev = prevKpis?.[card.key] ?? 0;
