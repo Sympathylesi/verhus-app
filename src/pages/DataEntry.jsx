@@ -183,7 +183,7 @@ export default function DataEntry() {
 
       <div className="min-h-[400px]">
         {step === 0 && <StepMetadata lang={lang} data={data} setData={setData} healthAreas={healthAreas} geoRegions={geoRegions} />}
-        {step === 1 && <StepSessions lang={lang} data={data} setData={setData} />}
+        {step === 1 && <StepSessions lang={lang} data={data} setData={setData} selectedWeek={selectedWeek} />}
         {step === 2 && <StepReport lang={lang} data={data} setData={setData} />}
         {step === 3 && <StepEngagement lang={lang} data={data} setData={setData} />}
         {step === 4 && <StepDoses lang={lang} data={data} setData={setData} />}

@@ -18,7 +18,8 @@ export const DOSE_AGE_SEX = [
   { key: 'hpv_9_13y',     label: '9-13y HPV' },
 ];
 
-export const SESSION_TYPES = ['mobile','outreach','fixed','door_to_door'];
+export const SESSION_TYPES = ['mobile','outreach','fixed'];
+export const DELIVERY_APPROACHES = ['door_to_door','quick_in_out','temporal_fix_post'];
 export const SESSION_AGE_SEX = [
   { key: '0_11m_male',    label: '0-11m M' },
   { key: '0_11m_female',  label: '0-11m F' },
@@ -49,9 +50,10 @@ export const COLUMN_DEFS = [
   col('region',           'Region',        'Identity', false, true),
   col('district',         'District',      'Identity', false, true),
   col('health_area_name', 'Health Area',   'Identity', false, true),
-  col('community',        'Community',     'Identity', false, false),
+  col('community',        'Community',     'Identity', false, true),
   col('strategy',         'Strategy',      'Identity', false, true),
   col('status',           'Status',        'Identity', false, true),
+  col('delivery_approach', 'Delivery Approach', 'Identity', false, true),
 
   // ── Community Engagement ──────────────────────────────────────────────────
   ...ENGAGEMENT_GROUPS.flatMap(g => [
@@ -83,6 +85,11 @@ export const COLUMN_DEFS = [
   ...SESSION_TYPES.flatMap(st =>
     SESSION_AGE_SEX.map(({ key, label }) =>
       col(`sess_${st}_${key}`, `${st[0].toUpperCase()+st.slice(1)} ${label}`, 'Sessions', true, false)
+    )
+  ),
+  ...DELIVERY_APPROACHES.flatMap(da =>
+    SESSION_AGE_SEX.map(({ key, label }) =>
+      col(`deliv_${da}_${key}`, `${da.replace(/_/g,' ')} ${label}`, 'Delivery', true, false)
     )
   ),
 
@@ -119,6 +126,7 @@ export function flattenRow(e, idx) {
   row.health_area_name = e.health_area_name ?? '';
   row.community        = e.community ?? '';
   row.strategy         = e.strategy ?? '';
+  row.delivery_approach = e.delivery_approach ?? '';
   row.status           = e.status ?? '';
 
   // Engagement

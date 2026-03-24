@@ -34,7 +34,16 @@ export default function CollapsibleTable({
         </thead>
         <tbody>
           {regions.map((region, ri) => {
-            const allItems  = Object.values(hierarchy[region]).flatMap(d => Object.values(d).flat());
+            // Support both hierarchy shapes:
+            // Shape A (3-level): { [region]: { [district]: { [haName]: entries[] } } }
+            // Shape B (2-level): { [region]: { [district]: item[] } }
+            const districtVal = Object.values(hierarchy[region])[0];
+            const is3Level = districtVal !== undefined && !Array.isArray(districtVal);
+
+            const allItems = is3Level
+              ? Object.values(hierarchy[region]).flatMap(d => Object.values(d).flat())
+              : Object.values(hierarchy[region]).flat();
+
             const rowData   = getRowData(allItems, 'region', region);
             const isOpen    = expandedRegions.has(region);
             const districts = Object.keys(hierarchy[region]).sort();
@@ -55,12 +64,14 @@ export default function CollapsibleTable({
                 </tr>
 
                 {isOpen && districts.map(district => {
-                  const haMap      = hierarchy[region][district]; // { [haName]: entries[] }
-                  const distFlat   = Object.values(haMap).flat();
+                  const raw        = hierarchy[region][district];
+                  // Shape A: raw = { [haName]: entries[] }, Shape B: raw = item[]
+                  const isHaMap    = !Array.isArray(raw);
+                  const distFlat   = isHaMap ? Object.values(raw).flat() : raw;
                   const distData   = getRowData(distFlat, 'district', district);
                   const distKey    = `${region}::${district}`;
                   const isDistOpen = expandedDistricts.has(distKey);
-                  const haNames    = Object.keys(haMap).sort();
+                  const haEntries  = isHaMap ? Object.entries(raw).sort(([a],[b]) => a.localeCompare(b)) : null;
                   return (
                     <React.Fragment key={distKey}>
                       <tr className={cn('border-b cursor-pointer transition-colors',
@@ -77,15 +88,27 @@ export default function CollapsibleTable({
                         ))}
                       </tr>
 
-                      {isDistOpen && haNames.map((haName, hi) => {
-                        const haEntries = haMap[haName];
-                        const itemData  = getRowData(haEntries, 'ha', haName);
+                      {isDistOpen && isHaMap && haEntries.map(([haName, haItems], hi) => {
+                        const itemData = getRowData(haItems, 'ha', haName);
                         return (
                           <tr key={haName} className={cn('border-b', hi%2===0 ? 'bg-violet-50/40 dark:bg-violet-950/10' : 'bg-violet-50/20')}>
                             <td className="sticky left-0 z-10 bg-inherit w-8 border-r"/>
                             <td className="sticky left-8 z-10 bg-inherit px-3 py-1.5 border-r text-muted-foreground pl-10">· {haName}</td>
                             {columns.slice(1).map(c => (
                               <td key={c.key} className="px-3 py-1.5 border-r text-right">{c.render(itemData.entries ?? itemData, itemData.target, haName, 'ha')}</td>
+                            ))}
+                          </tr>
+                        );
+                      })}
+                      {isDistOpen && !isHaMap && distFlat.map((item, hi) => {
+                        const itemData = getRowData([item], 'ha', item.name || item.health_area_name);
+                        const label    = item.name || item.health_area_name || `Item ${hi+1}`;
+                        return (
+                          <tr key={hi} className={cn('border-b', hi%2===0 ? 'bg-violet-50/40 dark:bg-violet-950/10' : 'bg-violet-50/20')}>
+                            <td className="sticky left-0 z-10 bg-inherit w-8 border-r"/>
+                            <td className="sticky left-8 z-10 bg-inherit px-3 py-1.5 border-r text-muted-foreground pl-10">· {label}</td>
+                            {columns.slice(1).map(c => (
+                              <td key={c.key} className="px-3 py-1.5 border-r text-right">{c.render(itemData.entries ?? itemData, itemData.target, label, 'ha')}</td>
                             ))}
                           </tr>
                         );

@@ -30,11 +30,12 @@ export default function StepScreening({ lang, data, setData }) {
     s + Object.values(v || {}).reduce((ss, n) => ss + (typeof n === 'number' ? n : 0), 0), 0
   );
 
-  // Total screened for malnutrition (sum of all mal grid entries)
-  const totalScreened = MAL_TYPES.reduce((s, mt) =>
-    s + AGE_BANDS.reduce((ss, ab) =>
-      ss + GENDERS.reduce((sss, g) => sss + (screening[`${mt.key}_${g.key}_${ab.key}`] || 0), 0), 0), 0
-  );
+  // Screened total comes from Doses tab (synced), not re-entered here
+  const totalScreened = data.screening?.screened_total ||
+    MAL_TYPES.reduce((s, mt) =>
+      s + AGE_BANDS.reduce((ss, ab) =>
+        ss + GENDERS.reduce((sss, g) => sss + (screening[`${mt.key}_${g.key}_${ab.key}`] || 0), 0), 0), 0
+    );
 
   const over = totalScreened > totalVaccinated && totalVaccinated > 0;
 
@@ -44,15 +45,24 @@ export default function StepScreening({ lang, data, setData }) {
   return (
     <div className="space-y-5">
       {/* Children vaccinated banner — carried from doses step */}
-      <div className={cn(
-        'flex items-center justify-between px-4 py-3 rounded-lg border',
-        over ? 'bg-red-50/50 border-red-200 dark:bg-red-950/20 dark:border-red-800' : 'bg-muted/50'
-      )}>
-        <div>
-          <p className="text-sm font-medium">{t('Children vaccinated (from Doses step)', 'Enfants vaccinés (depuis Doses)')}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{t('= children eligible for malnutrition screening', '= enfants éligibles au dépistage')}</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div className={cn(
+          'flex items-center justify-between px-4 py-3 rounded-lg border',
+          over ? 'bg-red-50/50 border-red-200 dark:bg-red-950/20 dark:border-red-800' : 'bg-muted/50'
+        )}>
+          <div>
+            <p className="text-sm font-medium">{t('Children vaccinated', 'Enfants vaccinés')}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{t('from Doses step', 'depuis Doses')}</p>
+          </div>
+          <span className="text-2xl font-bold text-primary">{totalVaccinated || '–'}</span>
         </div>
-        <span className="text-2xl font-bold text-primary">{totalVaccinated || '–'}</span>
+        <div className="flex items-center justify-between px-4 py-3 rounded-lg border bg-blue-50/50 dark:bg-blue-950/20">
+          <div>
+            <p className="text-sm font-medium">{t('Screened for malnutrition', 'Dépistés malnutrition')}</p>
+            <p className="text-xs text-blue-500 mt-0.5">{t('entered in Doses tab → locked here', 'saisi dans Doses → verrouillé ici')}</p>
+          </div>
+          <span className="text-2xl font-bold text-blue-600">{totalScreened || '–'}</span>
+        </div>
       </div>
 
       <Card>

@@ -4,6 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { ChevronRight, ChevronDown, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+} from 'recharts';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const ANTIGENS = [
@@ -31,6 +34,56 @@ function coverageBg(pct) {
   if (pct >= 80) return 'bg-emerald-50 dark:bg-emerald-950/20';
   if (pct >= 50) return 'bg-amber-50 dark:bg-amber-950/20';
   return 'bg-red-50 dark:bg-red-950/20';
+}
+
+const CHART_ANTIGENS = [
+  { key: 'Penta1', color: '#0ea5e9' },
+  { key: 'Penta3', color: '#10b981' },
+  { key: 'MCV1',   color: '#8b5cf6' },
+  { key: 'MCV2',   color: '#f59e0b' },
+];
+
+// ─── Coverage trend chart ─────────────────────────────────────────────────────
+function CoverageTrendChart({ filtered, totalTarget, lang }) {
+  const t = (en, fr) => lang === 'fr' ? fr : en;
+  const data = useMemo(() => {
+    const map = {};
+    filtered.forEach(e => {
+      const key = `${e.year}-W${String(e.week_number).padStart(2,'0')}`;
+      if (!map[key]) map[key] = { week: `W${e.week_number}`, Penta1:0, Penta3:0, MCV1:0, MCV2:0 };
+      const doses = e.vaccine_doses || {};
+      const vsum = v => Object.values(doses[v]||{}).reduce((a,b)=>a+(b||0),0);
+      map[key].Penta1 += vsum('Penta1');
+      map[key].Penta3 += vsum('Penta3');
+      map[key].MCV1   += vsum('MCV1');
+      map[key].MCV2   += (e.mcv2_count || vsum('MCV2 (MR2)'));
+    });
+    const tgt = totalTarget || 1;
+    return Object.values(map)
+      .sort((a,b) => a.week.localeCompare(b.week))
+      .map(d => ({ ...d, Penta1: Math.round(d.Penta1/tgt*100), Penta3: Math.round(d.Penta3/tgt*100), MCV1: Math.round(d.MCV1/tgt*100), MCV2: Math.round(d.MCV2/tgt*100) }));
+  }, [filtered, totalTarget]);
+
+  if (!data.length) return null;
+  return (
+    <div className="rounded-lg border p-4 bg-card">
+      <p className="text-sm font-semibold mb-3">{t('Coverage Trend (filtered)', 'Tendance couverture (filtrée)')}</p>
+      <div className="h-52 min-w-0">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+          <LineChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+            <XAxis dataKey="week" tick={{ fontSize: 10 }} />
+            <YAxis tick={{ fontSize: 11 }} unit="%" domain={[0,'auto']} />
+            <Tooltip formatter={v => `${v}%`} />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+            {CHART_ANTIGENS.map(a => (
+              <Line key={a.key} type="monotone" dataKey={a.key} stroke={a.color} strokeWidth={2} dot={{ r: 2 }} connectNulls />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
 }
 
 // ─── Select component ─────────────────────────────────────────────────────────
@@ -192,6 +245,9 @@ export default function CoverageTable() {
           <RotateCcw className="h-3 w-3" /> {t('Reset','Réinitialiser')}
         </button>
       </div>
+
+      {/* ── Trend chart (reacts to filters) ── */}
+      <CoverageTrendChart filtered={filtered} totalTarget={totalTarget} lang={lang} />
 
       {/* ── Breadcrumb / drill nav ── */}
       <div className="flex items-center gap-1.5 text-xs">

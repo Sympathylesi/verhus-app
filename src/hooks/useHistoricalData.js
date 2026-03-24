@@ -183,13 +183,19 @@ export function useHistoricalData({ periodMode, selectedWeek, dateRange }) {
       }));
   }, [entries, totalTarget]);
 
-  // Malnutrition trend
+  // Screening / malnutrition trend — one row per region+district+period for filtering
   const malnutritionTrend = useMemo(() => {
     const map = {};
     entries.forEach(e => {
-      const key = `${e.year}-W${String(e.week_number).padStart(2, '0')}`;
-      if (!map[key]) map[key] = { period: key, sam: 0, mam: 0 };
+      const key = `${e.region||''}::${e.district||''}::${e.year}-W${String(e.week_number).padStart(2, '0')}`;
+      if (!map[key]) map[key] = {
+        period: `${e.year}-W${String(e.week_number).padStart(2, '0')}`,
+        region: e.region || '', district: e.district || '',
+        screened: 0, sam: 0, mam: 0,
+      };
       const sc = e.screening || {};
+      const ov = e.other_variables || {};
+      map[key].screened += (ov.screened_malnutrition || sc.screened_total || 0);
       map[key].sam += (sc.sam_male_0_11 || 0) + (sc.sam_female_0_11 || 0) +
         (sc.sam_male_12_23 || 0) + (sc.sam_female_12_23 || 0);
       map[key].mam += (sc.mam_male_0_11 || 0) + (sc.mam_female_0_11 || 0) +

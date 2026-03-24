@@ -66,8 +66,12 @@ export default function MapsCoverage() {
     const map = {};
     filteredEntries.forEach(e => {
       const key = `${e.year}-W${String(e.week_number).padStart(2, '0')}`;
-      if (!map[key]) map[key] = { week: `W${e.week_number}`, dtp3: 0, mcv2: 0 };
+      if (!map[key]) map[key] = { week: `W${e.week_number}`, dtp1: 0, dtp3: 0, mcv1: 0, mcv2: 0 };
+      const doses = e.vaccine_doses || {};
+      const vsum = v => Object.values(doses[v]||{}).reduce((a,b)=>a+(b||0),0);
+      map[key].dtp1 += vsum('Penta1');
       map[key].dtp3 += e.dtp3_count || 0;
+      map[key].mcv1 += vsum('MCV1');
       map[key].mcv2 += e.mcv2_count || 0;
     });
     return Object.values(map)
@@ -75,7 +79,9 @@ export default function MapsCoverage() {
       .slice(-24)
       .map(r => ({
         ...r,
+        dtp1Pct: Math.round(r.dtp1 / totalTarget * 100),
         dtp3Pct: Math.round(r.dtp3 / totalTarget * 100),
+        mcv1Pct: Math.round(r.mcv1 / totalTarget * 100),
         mcv2Pct: Math.round(r.mcv2 / totalTarget * 100),
       }));
   }, [filteredEntries, totalTarget]);
@@ -83,9 +89,20 @@ export default function MapsCoverage() {
   const radarData = React.useMemo(() => {
     const vaccines = ['dtp3_count', 'mcv2_count', 'total_children_vaccinated', 'total_doses_administered'];
     const labels = ['DTP3', 'MCV2', t('Children', 'Enfants'), t('Doses', 'Doses')];
+    // add DTP1 and MCV1
+    const dtp1 = filteredEntries.reduce((s,e) => {
+      const d = e.vaccine_doses?.['Penta1'] || {};
+      return s + Object.values(d).reduce((a,b)=>a+(b||0),0);
+    }, 0);
+    const mcv1 = filteredEntries.reduce((s,e) => {
+      const d = e.vaccine_doses?.['MCV1'] || {};
+      return s + Object.values(d).reduce((a,b)=>a+(b||0),0);
+    }, 0);
     const totals = vaccines.map(k => filteredEntries.reduce((s, e) => s + (e[k] || 0), 0));
-    const max = Math.max(...totals, 1);
-    return labels.map((label, i) => ({ label, value: Math.round(totals[i] / max * 100) }));
+    const allVals = [...totals, dtp1, mcv1];
+    const allLabels = [...labels, 'DTP1', 'MCV1'];
+    const max = Math.max(...allVals, 1);
+    return allLabels.map((label, i) => ({ label, value: Math.round(allVals[i] / max * 100) }));
   }, [filteredEntries, lang]);
 
   const coverageBuckets = React.useMemo(() => {
@@ -186,9 +203,17 @@ export default function MapsCoverage() {
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <AreaChart data={coverageTrend}>
                   <defs>
+                    <linearGradient id="dtp1Grad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
                     <linearGradient id="dtp3Grad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#0EA5E9" stopOpacity={0.3} />
                       <stop offset="95%" stopColor="#0EA5E9" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="mcv1Grad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="mcv2Grad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3} />
@@ -199,7 +224,9 @@ export default function MapsCoverage() {
                   <XAxis dataKey="week" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 11 }} unit="%" domain={[0, 100]} />
                   <Tooltip formatter={v => `${v}%`} />
+                  <Area type="monotone" dataKey="dtp1Pct" stroke="#10b981" fill="url(#dtp1Grad)" name="DTP1 %" />
                   <Area type="monotone" dataKey="dtp3Pct" stroke="#0EA5E9" fill="url(#dtp3Grad)" name="DTP3 %" />
+                  <Area type="monotone" dataKey="mcv1Pct" stroke="#f59e0b" fill="url(#mcv1Grad)" name="MCV1 %" />
                   <Area type="monotone" dataKey="mcv2Pct" stroke="#8B5CF6" fill="url(#mcv2Grad)" name="MCV2 %" />
                 </AreaChart>
               </ResponsiveContainer>

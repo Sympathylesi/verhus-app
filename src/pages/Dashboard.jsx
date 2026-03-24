@@ -15,10 +15,12 @@ import StockOutAEFIChart from '../components/dashboard/StockOutAEFIChart';
 import AgeSexCoverageChart from '../components/dashboard/AgeSexCoverageChart';
 import HistoricalKPICards from '../components/dashboard/HistoricalKPICards';
 import CoverageTrendChart from '../components/dashboard/CoverageTrendChart';
-import MalnutritionChart from '../components/dashboard/MalnutritionChart';
+import ScreeningChart from '../components/dashboard/ScreeningChart';
 import TopBottomAreas from '../components/dashboard/TopBottomAreas';
 import DropoutRateChart from '../components/dashboard/DropoutRateChart';
-import DistrictHeatmap from '../components/dashboard/DistrictHeatmap';
+import WeeklyKPIChart from '../components/dashboard/WeeklyKPIChart';
+import HumanitarianChart from '../components/dashboard/HumanitarianChart';
+import OtherAntigensChart from '../components/dashboard/OtherAntigensChart';
 import { useHistoricalData } from '../hooks/useHistoricalData';
 
 // ─── Period presets ───────────────────────────────────────────────────────────
@@ -112,6 +114,7 @@ export default function Dashboard() {
   // ── Historical data ────────────────────────────────────────────────────────
   const {
     isLoading: loadingHist,
+    entries: histEntries,
     kpis,
     prevKpis,
     periodLabel,
@@ -119,7 +122,6 @@ export default function Dashboard() {
     malnutritionTrend,
     topBottomAreas,
     dropoutTrend,
-    districtHeatmap,
   } = useHistoricalData({
     periodMode: mode === 'historical' ? periodMode : null,
     selectedWeek,
@@ -245,6 +247,9 @@ export default function Dashboard() {
             <StockOutAEFIChart      lang={lang} entries={thisWeek} />
             <AgeSexCoverageChart    lang={lang} entries={thisWeek} />
           </div>
+          <HumanitarianChart lang={lang} entries={thisWeek} />
+          <OtherAntigensChart lang={lang} entries={thisWeek} />
+          <WeeklyKPIChart lang={lang} entries={entries} totalTarget={totalTarget} />
         </>
       )}
 
@@ -259,7 +264,7 @@ export default function Dashboard() {
             ) : (
               <>
                 <CoverageTrendChart lang={lang} data={coverageTrend} loading={loadingHist} />
-                <MalnutritionChart lang={lang} data={malnutritionTrend} loading={loadingHist} />
+                <ScreeningChart lang={lang} data={malnutritionTrend} loading={loadingHist} />
               </>
             )}
           </div>
@@ -275,7 +280,9 @@ export default function Dashboard() {
             )}
           </div>
 
-          <DistrictHeatmap lang={lang} data={districtHeatmap} loading={loadingHist} />
+          <HumanitarianChart lang={lang} entries={histEntries} />
+          <OtherAntigensChart lang={lang} entries={histEntries} />
+          <WeeklyKPIChart lang={lang} entries={histEntries} totalTarget={totalTarget} />
         </>
       )}
     </div>

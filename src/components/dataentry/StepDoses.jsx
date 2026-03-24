@@ -30,23 +30,27 @@ const AGE_COLS = [
 ];
 
 const CONTACT_TYPES = [
-  { key: 'first',    label: { en: 'First Contact',    fr: 'Premier contact' } },
+  { key: 'first',    label: { en: 'First Contact',     fr: 'Premier contact' } },
   { key: 'followup', label: { en: 'Follow-up Contact', fr: 'Contact de suivi' } },
 ];
 
+// Screened for malnutrition is handled separately (syncs to Screening tab)
 const OTHER_VARS = [
-  { key: 'newly_vaccinated',      label: { en: 'Children newly vaccinated by project team', fr: "Enfants nouvellement vaccin\u00e9s par l'\u00e9quipe" } },
+  { key: 'newly_vaccinated',      label: { en: 'Children newly vaccinated by project team', fr: "Enfants nouvellement vaccinés par l'équipe" } },
   { key: 'serious_aefi',          label: { en: 'Number of Serious AEFI',                    fr: "Nombre d'EIAS graves" } },
-  { key: 'disability_vaccinated', label: { en: 'Children with disability vaccinated',        fr: 'Enfants handicap\u00e9s vaccin\u00e9s' } },
-  { key: 'screened_malnutrition', label: { en: 'Children screened for malnutrition',         fr: 'Enfants d\u00e9pist\u00e9s malnutrition' } },
-  { key: 'sam_identified',        label: { en: 'SAM identified',                             fr: 'MAS identifi\u00e9s' } },
-  { key: 'moderate_identified',   label: { en: 'Moderate malnutrition identified',           fr: 'Malnutrition mod\u00e9r\u00e9e identifi\u00e9e' } },
-  { key: 'educational_talks',     label: { en: 'Number of educational talks',                fr: 'Nombre de causeries \u00e9ducatives' } },
+  { key: 'disability_vaccinated', label: { en: 'Children with disability vaccinated',        fr: 'Enfants handicapés vaccinés' } },
+  { key: 'educational_talks',     label: { en: 'Number of educational talks',                fr: 'Nombre de causeries éducatives' } },
 ];
 
+const STOCKOUT_KPIS = ['Penta1','Penta2','Penta3','MCV1 (MR1)','MCV2 (MR2)','BCG','OPV0','OPV3','Yellow Fever','Vitamin A'];
+
+const Shade = () => <div className="h-7 w-14 mx-auto rounded bg-muted/40" />;
+
 export default function StepDoses({ lang, data, setData }) {
-  const doses = data.vaccine_doses || {};
-  const other = data.other_variables || {};
+  const doses   = data.vaccine_doses    || {};
+  const other   = data.other_variables  || {};
+  const stockouts       = data.stockouts        || {};
+  const stockoutDetails = data.stockout_details || {};
   const t = (en, fr) => lang === 'fr' ? fr : en;
 
   const updateDose = (vaccine, contact, col, value) =>
@@ -57,23 +61,41 @@ export default function StepDoses({ lang, data, setData }) {
         [vaccine]: {
           ...(prev.vaccine_doses?.[vaccine] || {}),
           [`${contact}_${col}`]: parseInt(value) || 0,
-        }
-      }
+        },
+      },
     }));
 
   const updateOther = (key, value) =>
     setData(prev => ({ ...prev, other_variables: { ...(prev.other_variables || {}), [key]: parseInt(value) || 0 } }));
 
+  // Screened row: first-contact only, syncs total to screening.screened_total
+  const updateScreened = (col, value) => {
+    const val = parseInt(value) || 0;
+    setData(prev => {
+      const updated = { ...(prev.other_variables || {}), [`screened_malnutrition_${col}`]: val };
+      const total = AGE_COLS.reduce((s, c) => s + (updated[`screened_malnutrition_${c.key}`] || 0), 0);
+      return {
+        ...prev,
+        other_variables: updated,
+        screening: { ...(prev.screening || {}), screened_total: total },
+      };
+    });
+  };
+
   const updateStockout = (groupKey, value) =>
+    setData(prev => ({ ...prev, stockouts: { ...(prev.stockouts || {}), [groupKey]: value } }));
+
+  const updateStockoutDetail = (groupKey, field, value) =>
     setData(prev => ({
       ...prev,
-      stockouts: { ...(prev.stockouts || {}), [groupKey]: value }
+      stockout_details: {
+        ...(prev.stockout_details || {}),
+        [groupKey]: { ...(prev.stockout_details?.[groupKey] || {}), [field]: value },
+      },
     }));
 
   const contactTotal = (vaccine, contact) =>
     AGE_COLS.reduce((s, col) => s + (doses[vaccine]?.[`${contact}_${col.key}`] || 0), 0);
-
-  const stockouts = data.stockouts || {};
 
   const grandTotal = VACCINES.reduce((s, v) =>
     s + CONTACT_TYPES.reduce((ss, ct) => ss + contactTotal(v, ct.key), 0), 0
@@ -147,7 +169,7 @@ export default function StepDoses({ lang, data, setData }) {
                         </React.Fragment>
                       ))}
                       {isFirst && (
-                        <td className="py-1.5 px-2 text-center align-middle" rowSpan={group.vaccines.length}>
+                        <td className="py-1.5 px-2 text-center align-top pt-2" rowSpan={group.vaccines.length}>
                           <button
                             type="button"
                             onClick={() => updateStockout(group.key, !stockouts[group.key])}
@@ -160,6 +182,27 @@ export default function StepDoses({ lang, data, setData }) {
                           >
                             {stockouts[group.key] ? 'Y' : 'N'}
                           </button>
+                          {/* Sub-form when stockout = true */}
+                          {stockouts[group.key] && (
+                            <div className="mt-1.5 space-y-1 text-left">
+                              <Input
+                                type="date"
+                                value={stockoutDetails[group.key]?.date || ''}
+                                onChange={e => updateStockoutDetail(group.key, 'date', e.target.value)}
+                                className="h-6 text-[10px] w-24"
+                                title={t('Stockout date', 'Date rupture')}
+                              />
+                              <select
+                                value={stockoutDetails[group.key]?.kpi || ''}
+                                onChange={e => updateStockoutDetail(group.key, 'kpi', e.target.value)}
+                                className="h-6 w-24 rounded border border-input bg-background text-[10px] px-1 focus:outline-none"
+                                title={t('Affected KPI', 'KPI affecté')}
+                              >
+                                <option value="">{t('KPI…', 'KPI…')}</option>
+                                {STOCKOUT_KPIS.map(k => <option key={k} value={k}>{k}</option>)}
+                              </select>
+                            </div>
+                          )}
                         </td>
                       )}
                     </tr>
@@ -171,11 +214,41 @@ export default function StepDoses({ lang, data, setData }) {
         </CardContent>
       </Card>
 
-      {/* Other variables — same columns as vaccine table */}
+      {/* Other variables */}
       <Card>
         <CardContent className="p-0 overflow-x-auto">
           <table className="w-full text-xs min-w-[900px]">
             <tbody>
+              {/* Screened for malnutrition — first contact only, syncs to Screening tab */}
+              <tr className="border-b bg-blue-50/40 dark:bg-blue-950/10">
+                <td className="py-1 px-3 sticky left-0 bg-blue-50/60 dark:bg-blue-950/20 z-10 min-w-[140px]">
+                  <span className="block font-medium text-muted-foreground leading-tight">
+                    {t('Screened (malnutrition)', 'Dépistés (malnutrition)')}
+                  </span>
+                  <span className="text-[9px] text-blue-500">
+                    {t('→ auto-fills Screening tab', '→ remplit onglet Dépistage')}
+                  </span>
+                </td>
+                {AGE_COLS.map(col => (
+                  <td key={col.key} className="py-1 px-0.5">
+                    <Input type="number" inputMode="numeric" min={0}
+                      value={other[`screened_malnutrition_${col.key}`] || ''}
+                      onChange={e => updateScreened(col.key, e.target.value)}
+                      className="h-7 w-14 text-center text-xs mx-auto" />
+                  </td>
+                ))}
+                {/* Total col */}
+                <td className="py-1.5 px-2 text-center font-bold text-blue-600">
+                  {AGE_COLS.reduce((s, c) => s + (other[`screened_malnutrition_${c.key}`] || 0), 0) || '–'}
+                </td>
+                {/* Follow-up cols — locked/shaded */}
+                {AGE_COLS.map(col => (
+                  <td key={`fu_${col.key}`} className="py-1 px-0.5"><Shade /></td>
+                ))}
+                <td className="py-1 px-0.5"><Shade /></td>
+                <td className="py-1 px-0.5"><div className="h-7 w-10 mx-auto rounded bg-muted/60 border border-dashed border-muted-foreground/20" /></td>
+              </tr>
+
               {OTHER_VARS.map(v => (
                 <tr key={v.key} className="border-b last:border-0 bg-muted/10">
                   <td className="py-1 px-3 font-medium text-muted-foreground sticky left-0 bg-muted/10 z-10 min-w-[140px] leading-tight">
@@ -189,10 +262,7 @@ export default function StepDoses({ lang, data, setData }) {
                         className="h-7 w-14 text-center text-xs mx-auto" />
                     </td>
                   ))}
-                  {/* empty separator matching Total column */}
-                  <td className="py-1 px-0.5">
-                    <div className="h-7 w-14 mx-auto rounded bg-muted/40" />
-                  </td>
+                  <td className="py-1 px-0.5"><Shade /></td>
                   {AGE_COLS.map(col => (
                     <td key={`followup_${col.key}`} className="py-1 px-0.5">
                       <Input type="number" inputMode="numeric" min={0}
@@ -201,13 +271,8 @@ export default function StepDoses({ lang, data, setData }) {
                         className="h-7 w-14 text-center text-xs mx-auto" />
                     </td>
                   ))}
-                  {/* empty separator matching Total column */}
-                  <td className="py-1 px-0.5">
-                    <div className="h-7 w-14 mx-auto rounded bg-muted/40" />
-                  </td>
-                  <td className="py-1 px-0.5">
-                    <div className="h-7 w-10 mx-auto rounded bg-muted/60 border border-dashed border-muted-foreground/20" />
-                  </td>
+                  <td className="py-1 px-0.5"><Shade /></td>
+                  <td className="py-1 px-0.5"><div className="h-7 w-10 mx-auto rounded bg-muted/60 border border-dashed border-muted-foreground/20" /></td>
                 </tr>
               ))}
             </tbody>

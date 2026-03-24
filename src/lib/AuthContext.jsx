@@ -58,8 +58,20 @@ export const AuthProvider = ({ children }) => {
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-  // Seed default admin on first load
-  useEffect(() => { seedAdmin(); }, []);
+  // Auto-login as admin — no password required
+  useEffect(() => {
+    seedAdmin();
+    const users = getUsers();
+    const admin = users.find(u => u.role === 'admin');
+    if (admin) {
+      const token = generateToken(admin.id);
+      localStorage.setItem(TOKEN_KEY, token);
+      const { password: _, ...safeUser } = admin;
+      setUser(safeUser);
+      setIsAuthenticated(true);
+    }
+    setIsLoadingAuth(false);
+  }, []);
 
   // Online/offline detection
   useEffect(() => {
@@ -68,28 +80,6 @@ export const AuthProvider = ({ children }) => {
     window.addEventListener('online', on);
     window.addEventListener('offline', off);
     return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
-  }, []);
-
-  // Restore session from token
-  useEffect(() => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (token) {
-      const payload = parseToken(token);
-      if (payload) {
-        const users = getUsers();
-        const found = users.find(u => u.id === payload.userId);
-        if (found) {
-          const { password: _, ...safeUser } = found;
-          setUser(safeUser);
-          setIsAuthenticated(true);
-        } else {
-          localStorage.removeItem(TOKEN_KEY);
-        }
-      } else {
-        localStorage.removeItem(TOKEN_KEY);
-      }
-    }
-    setIsLoadingAuth(false);
   }, []);
 
   const login = useCallback(async (email, password) => {
